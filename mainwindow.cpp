@@ -71,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     GoButton = new QPushButton("Go", this);
     GoButton->move(50, 320);
-    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(Go()));
+    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(grabCameraFrame()));
 
     PauseButton = new QPushButton("Pause", this);
     PauseButton->move(150, 320);
@@ -360,6 +360,7 @@ MainWindow::MainWindow(QWidget *parent) :
     progressBar ->move(50, 370);
     progressBar->setFixedWidth(1400);
 
+    camera = new VideoCapture(0);
 
 
     // Execution
@@ -368,8 +369,9 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     //timer->moveToThread(this_thread);
     //thread->start();
-    connect(timer, SIGNAL(timeout()), this, SLOT(Go())); // Tracking
-    connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
+    //QObject::connect(timer, SIGNAL(timeout()), this, SLOT(grabCameraFrame())); // Tracking
+    QObject::connect(this, SIGNAL(frameGrab(UMat)), this, SLOT(Go(UMat)));
+    QObject::connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
 
     imr = 0;
     timerReplay = new QTimer(this);
@@ -413,7 +415,15 @@ void MainWindow::UpdateParameters(){
 
 }
 
-void MainWindow::Go(){
+void MainWindow::grabCameraFrame(){
+    camera ->read(cameraFrame);
+    emit frameGrab(cameraFrame);
+
+}
+
+
+
+void MainWindow::Go(UMat cameraFrame){
 
         try{
 
@@ -440,51 +450,28 @@ void MainWindow::Go(){
         saveField->setDisabled(true);
 
 
-
         if(im == 0){ // Initialization
 
 
             timer->start(0);
             UpdateParameters();
-            string folder = pathField->text().toStdString();
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
 
-            try{
-                glob(folder, files, false);
-            }
-            catch (...){
-                timer->stop();
-                PauseButton ->setText("Play");
-                pause = false;
-                QMessageBox pathError;
-                pathError.setText("No files found");
-                pathError.exec();
-            }
-
-            sort(files.begin(), files.end());
-            a = files.begin();
-            string name = *a;
             progressBar ->setRange(0, files.size());
-            background = BackgroundExtraction(files, nBackground);
+            //background = BackgroundExtraction(files, nBackground);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
             savePath = saveField->text().toStdString();
 
-            for(unsigned int ini = 0; ini < files.size(); ini++){
-                internalSaving.push_back(Point3f(0., 0., 0.));
-            }
-        }
+         }
 
 
-        string name = *a;
-        savefile.open(savePath);
 
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
-        imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
-        visu = imread(name);
-        subtract(background, cameraFrame, cameraFrame);
+        visu = cameraFrame.getMat(cv::ACCESS_READ);
+        //subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);

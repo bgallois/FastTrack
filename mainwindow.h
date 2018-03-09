@@ -54,6 +54,8 @@ private:
     QMessageBox *welcomeBox;
     QString version = "v3.5.2";
 
+    VideoCapture *camera;
+
 
     QLabel *refreshRateLabel;
     QLabel *path;
@@ -138,15 +140,17 @@ private:
     bool pause;
 
 public slots:
-    void Go();
+    void Go(UMat);
     void Write();
     void Reset();
     void Display(Mat visu, UMat cameraFrame);
     void Replay();
     void UpdateParameters();
     void PlayPause();
+    void grabCameraFrame();
 
 signals:
+    void frameGrab(UMat cameraFrame);
     void grabFrame(Mat visu, UMat cameraFrame);
 };
 
