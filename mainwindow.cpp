@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QSizePolicy>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <string>
@@ -19,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setFixedSize(1600, 1000);
+    setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
 
 
@@ -59,270 +60,227 @@ MainWindow::MainWindow(QWidget *parent) :
     // Widgets layout
 
     QuitButton = new QPushButton("Quit", this);
-    QuitButton->move(450, 320);
     QObject::connect(QuitButton, SIGNAL(clicked()), qApp, SLOT(quit()));
     QObject::connect(qApp, SIGNAL(aboutToQuit()), welcomeBox, SLOT(exec()));
 
 
     ResetButton = new QPushButton("Reset", this);
-    ResetButton->move(550, 320);
     QObject::connect(ResetButton, SIGNAL(clicked()), this, SLOT(Reset()));
 
 
     GoButton = new QPushButton("Go", this);
-    GoButton->move(50, 320);
     QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(grabCameraFrame()));
 
     PauseButton = new QPushButton("Pause", this);
-    PauseButton->move(150, 320);
     pause = true;
 
     DefaultButton = new QPushButton("Set as default", this);
-    DefaultButton->move(350, 320);
     QObject::connect(DefaultButton, SIGNAL(clicked()), this, SLOT(Write()));
 
     ReplayButton = new QPushButton("Replay", this);
-    ReplayButton->move(250, 320);
     QObject::connect(ReplayButton, SIGNAL(clicked()), this, SLOT(Replay()));
+    QSizePolicy spRetain = ReplayButton->sizePolicy();
+    spRetain.setRetainSizeWhenHidden(true);
+    ReplayButton->setSizePolicy(spRetain);
     ReplayButton ->hide();
 
 
     normal = new QCheckBox("Normal", this);
-    normal ->move(660, 310);
     normal ->setChecked(1);
     normal ->isChecked();
     normal ->setToolTip(tr("Check this option to display the original image with trajectories of tracked objects."));
 
     binary = new QCheckBox("Binary", this);
-    binary ->move(660, 340);
     binary ->setToolTip(tr("Check this option to display the binary image. Useful to ajust the binary threshold parameter."));
 
 
 
     path = new QLabel(this);
     path->setText("Path:");
-    path->move(50, 50);
     path->adjustSize();
     path ->setToolTip(tr("Path to the folder that contains images. Have to add /*extension at the end."));
 
 
     pathField = new QLineEdit(this);
-    pathField ->move(250,50);
     pathField->setText(defParameters.at(0));
     pathField->adjustSize();
 
 
     numLabel = new QLabel(this);
     numLabel->setText("Number of objects:");
-    numLabel->move(50, 100);
     numLabel->adjustSize();
     numLabel->setToolTip(tr("Number of objects to track, can't be changed during the tracking phase."));
 
 
     numField = new QLineEdit(this);
-    numField ->move(250,100);
     numField->setText(defParameters.at(1));
 
 
     maxArea = new QLabel(this);
     maxArea->setText("Maximal area:");
-    maxArea->move(50, 150);
     maxArea->adjustSize();
     maxArea->setToolTip(tr("Maximal area in px of objects to track."));
 
     maxAreaField = new QLineEdit(this);
-    maxAreaField ->move(250,150);
     maxAreaField->setText(defParameters.at(2));
 
 
     minArea = new QLabel(this);
     minArea->setText("Minimal area:");
-    minArea->move(50, 200);
     minArea->adjustSize();
     minArea->setToolTip(tr("Minimal area in px of objects to track."));
 
 
     minAreaField = new QLineEdit(this);
-    minAreaField ->move(250,200);
     minAreaField->setText(defParameters.at(3));
 
 
     thresh = new QLabel(this);
     thresh->setText("Binary threshold:");
-    thresh->move(50, 250);
     thresh->adjustSize();
     thresh->setToolTip(tr("Binary threshold, image[i,j] < thresh = 0, image[i,j] > thresh = 1."));
 
 
     threshField = new QLineEdit(this);
-    threshField ->move(250,250);
     threshField->setText(defParameters.at(9));
     threshField->adjustSize();
 
 
     length = new QLabel(this);
     length->setText("Max displacement:");
-    length->move(500, 50);
     length->adjustSize();
     length->setToolTip(tr("Maximal displacement possible of an object between two frames in px."));
 
 
 
     lengthField = new QLineEdit(this);
-    lengthField ->move(700,50);
     lengthField->setText(defParameters.at(4));
 
 
     angle = new QLabel(this);
     angle->setText("Max angle:");
-    angle->move(500, 100);
     angle->adjustSize();
     angle->setToolTip(tr("Maximal orientation change of an object between two frames in degree."));
 
 
     angleField = new QLineEdit(this);
-    angleField ->move(700,100);
     angleField->setText(defParameters.at(5));
 
 
 
     lo = new QLabel(this);
     lo->setText("Max occlusion:");
-    lo->move(500, 150);
     lo->adjustSize();
     lo->setToolTip(tr("Maximum distance in px that an object can move when it is occulted by another object."));
 
 
 
     loField = new QLineEdit(this);
-    loField ->move(700,150);
     loField->setText(defParameters.at(6));
 
 
     w = new QLabel(this);
     w->setText("Weight:");
-    w->move(500, 200);
     w->adjustSize();
     w->setToolTip(tr("Importance of orientation and distance for the tracking. Closer to 0 the tracking is more sensitive to the orientation of objects and closer to 1 is more sensitive to the distance."));
 
 
 
     wField = new QLineEdit(this);
-    wField ->move(700,200);
     wField->setText(defParameters.at(7));
 
 
     nBack = new QLabel(this);
     nBack->setText("Background images:");
-    nBack->move(500, 250);
     nBack->adjustSize();
     nBack->setToolTip(tr("Number of images to compute the background."));
 
 
 
     nBackField = new QLineEdit(this);
-    nBackField ->move(700,250);
     nBackField->setText(defParameters.at(8));
 
 
     save = new QLabel(this);
     save->setText("Save to:");
-    save->move(900, 50);
     save->adjustSize();
     save->setToolTip(tr("Path to a .txt file where the result of the tracking will be saved. Saved in the reference frame of the croped image."));
 
 
     saveField = new QLineEdit(this);
-    saveField ->move(1200,50);
     saveField->setText(defParameters.at(10));
 
 
 
     x1ROI = new QLabel(this);
     x1ROI->setText("Top corner x position for the ROI:");
-    x1ROI->move(900, 100);
     x1ROI->adjustSize();
     x1ROI->setToolTip(tr("Horizontale position of the top right corner of the region of interest."));
 
 
 
     x1ROIField = new QLineEdit(this);
-    x1ROIField ->move(1200,100);
     x1ROIField->setText(defParameters.at(11));
 
 
 
     x2ROI = new QLabel(this);
     x2ROI->setText("Bottom corner x position for the ROI:");
-    x2ROI->move(900, 150);
     x2ROI->adjustSize();
     x2ROI->setToolTip(tr("Horizontale position of the bottom left corner of the region of interest."));
 
 
     x2ROIField = new QLineEdit(this);
-    x2ROIField ->move(1200,150);
     x2ROIField->setText(defParameters.at(12));
 
 
 
     y1ROI = new QLabel(this);
     y1ROI->setText("Top corner y position for the ROI:");
-    y1ROI->move(900, 200);
     y1ROI->adjustSize();
     y1ROI->setToolTip(tr("Verticale position of the top right corner of the region of interest."));
 
 
     y1ROIField = new QLineEdit(this);
-    y1ROIField ->move(1200,200);
     y1ROIField->setText(defParameters.at(13));
 
 
 
     y2ROI = new QLabel(this);
     y2ROI->setText("Bottom corner y position for the ROI:");
-    y2ROI->move(900, 250);
     y2ROI->adjustSize();
     y2ROI->setToolTip(tr("Verticale position of the bottom left corner of the region of interest."));
 
 
 
     y2ROIField = new QLineEdit(this);
-    y2ROIField ->move(1200,250);
     y2ROIField->setText(defParameters.at(14));
 
 
     arrow = new QLabel(this);
-    arrow -> move(1400, 50);
     arrow -> setText("Arrow size:");
 
 
     arrowField = new QLCDNumber(this);
-    arrowField ->move(1490,50);
     arrowField ->display(2);
 
 
     arrowSlider = new QSlider(Qt::Horizontal, this);
-    arrowSlider ->setGeometry(10, 60, 100, 20);
-    arrowSlider -> move(1400, 100);
     arrowSlider -> setMinimum(2);
 
     QObject::connect(arrowSlider, SIGNAL(valueChanged(int)), arrowField, SLOT(display(int))) ;
 
     fps = new QLabel(this);
-    fps -> move(1400, 200);
     fps -> setText("FPS:");
     fps -> hide();
 
 
     fpsField = new QLCDNumber(this);
-    fpsField ->move(1490,200);
     fpsField ->display(20);
     fpsField -> hide();
 
 
     fpsSlider = new QSlider(Qt::Horizontal, this);
-    fpsSlider ->setGeometry(10, 60, 100, 20);
-    fpsSlider -> move(1400, 250);
     fpsSlider -> setMinimum(1);
     fpsSlider -> setMaximum(300);
     fpsSlider-> hide();
@@ -330,11 +288,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(fpsSlider, SIGNAL(valueChanged(int)), fpsField, SLOT(display(int)));
 
     trackingSpotLabel = new QLabel(this);
-    trackingSpotLabel ->move(1400, 150);
     trackingSpotLabel ->setText("Spot to track:");
 
     trackingSpot = new QComboBox(this);
-    trackingSpot ->move(1400, 180);
     trackingSpot ->addItem(tr("Head"));
     trackingSpot ->addItem(tr("Tail"));
     trackingSpot ->addItem(tr("Center of mass"));
@@ -343,33 +299,94 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     display = new QLabel(this);
-    display ->move(50, 400);
-    display ->setScaledContents(true);
-    display->adjustSize();
+    display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+
+
+
 
 
 
     display2 = new QLabel(this);
-    display2 ->move(50, 400);
-    display2 ->setScaledContents(true);
-    display2->adjustSize();
+    display2->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
 
 
     progressBar = new QProgressBar(this);
-    progressBar ->move(50, 370);
-    progressBar->setFixedWidth(1400);
+
+    QGridLayout *layout = new QGridLayout;
+    layout->addWidget(path, 0, 0);
+    layout->addWidget(numLabel, 1, 0);
+    layout->addWidget(maxArea, 2, 0);
+    layout->addWidget(minArea, 3, 0);
+    layout->addWidget(thresh, 4, 0);
+    layout->addWidget(pathField, 0, 1);
+    layout->addWidget(numField, 1, 1);
+    layout->addWidget(maxAreaField, 2, 1);
+    layout->addWidget(minAreaField, 3, 1);
+    layout->addWidget(threshField, 4, 1);
+
+    layout->addWidget(length, 0, 3);
+    layout->addWidget(angle, 1, 3);
+    layout->addWidget(lo, 2, 3);
+    layout->addWidget(w, 3, 3);
+    layout->addWidget(nBack, 4, 3);
+    layout->addWidget(lengthField, 0, 4);
+    layout->addWidget(angleField, 1, 4);
+    layout->addWidget(loField, 2, 4);
+    layout->addWidget(wField, 3, 4);
+    layout->addWidget(nBackField, 4, 4);
+
+    layout->addWidget(save, 0, 6);
+    layout->addWidget(x1ROI, 1, 6);
+    layout->addWidget(x2ROI, 2, 6);
+    layout->addWidget(y1ROI, 3, 6);
+    layout->addWidget(y2ROI, 4, 6);
+    layout->addWidget(saveField, 0, 7);
+    layout->addWidget(x1ROIField, 1, 7);
+    layout->addWidget(x2ROIField, 2, 7);
+    layout->addWidget(y1ROIField, 3, 7);
+    layout->addWidget(y2ROIField, 4, 7);
+
+    layout->addWidget(arrow, 0, 9);
+    layout->addWidget(arrowField, 0, 10);
+    layout->addWidget(arrowSlider, 1, 9);
+
+    layout->addWidget(trackingSpotLabel, 2, 9);
+    layout->addWidget(trackingSpot, 3, 9);
+
+    layout->addWidget(fps, 4, 9);
+    layout->addWidget(fpsField, 4, 10);
+    layout->addWidget(fpsSlider, 5, 9);
+
+    layout->addWidget(GoButton, 5, 0);
+    layout->addWidget(PauseButton, 5, 1);
+    layout->addWidget(ReplayButton, 5, 2);
+    layout->addWidget(DefaultButton, 5, 3);
+    layout->addWidget(QuitButton, 5, 4);
+    layout->addWidget(ResetButton, 5, 5);
+
+    layout->addWidget(normal, 5, 6);
+    layout->addWidget(binary, 6, 6);
+
+    layout->addWidget(progressBar, 7, 0, 1, 10);
+
+    layout->addWidget(display, 8, 0, 5, 5);
+    layout->addWidget(display2, 8, 6, 5, 5);
+
+
+    central = new QWidget(this);
+    central->setLayout(layout);
+    setCentralWidget(central);
+
 
     camera = new VideoCapture(0);
 
 
+    back();
     // Execution
-    //QThread* thread = new QThread;
     im = 0;
     timer = new QTimer(this);
-    //timer->moveToThread(this_thread);
-    //thread->start();
-    //QObject::connect(timer, SIGNAL(timeout()), this, SLOT(grabCameraFrame())); // Tracking
+    QObject::connect(timer, SIGNAL(timeout()), this, SLOT(grabCameraFrame())); // Tracking
     QObject::connect(this, SIGNAL(frameGrab(UMat)), this, SLOT(Go(UMat)));
     QObject::connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
 
@@ -415,6 +432,28 @@ void MainWindow::UpdateParameters(){
 
 }
 
+void MainWindow::back(){
+    int i = 0;
+    camera ->read(cameraFrame);
+    cameraFrame.convertTo(cameraFrame, CV_8U);
+    cvtColor(cameraFrame, cameraFrame, CV_BGR2GRAY);
+    background = cameraFrame.clone();
+    background.convertTo(background, CV_32F);
+
+    while(i < 10){
+        camera ->read(cameraFrame);
+        cameraFrame.convertTo(cameraFrame, CV_32FC1);
+        cvtColor(cameraFrame, cameraFrame, CV_BGR2GRAY);
+        accumulate(cameraFrame, background);
+        i++;
+    }
+    UMat identity = UMat::ones(background.rows, background.cols, CV_32F);
+    multiply(background, identity, background, 1/(10.));
+    background.convertTo(background, CV_8U);
+}
+
+
+
 void MainWindow::grabCameraFrame(){
     camera ->read(cameraFrame);
     emit frameGrab(cameraFrame);
@@ -459,7 +498,6 @@ void MainWindow::Go(UMat cameraFrame){
             NUMBER = numField->text().toInt(); //number of objects to track
 
             progressBar ->setRange(0, files.size());
-            //background = BackgroundExtraction(files, nBackground);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
@@ -467,12 +505,14 @@ void MainWindow::Go(UMat cameraFrame){
 
          }
 
-
-
+        savefile.open(savePath);
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
-        visu = cameraFrame.getMat(cv::ACCESS_READ);
-        //subtract(background, cameraFrame, cameraFrame);
+        visu = cameraFrame.getMat(cv::ACCESS_RW).clone();
+        cameraFrame.convertTo(cameraFrame, CV_8U);
+        cvtColor(cameraFrame, cameraFrame, CV_BGR2GRAY);
+        subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
+
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
 
@@ -538,7 +578,7 @@ void MainWindow::Go(UMat cameraFrame){
             // Saving
             coord.x += ROI.tl().x;
             coord.y += ROI.tl().y;
-            internalSaving.at(im) = coord;
+            //internalSaving.at(im) = coord;
             ofstream savefile;
             savefile.open(savePath, ios::out | ios::app );
             if(im == 0 && l == 0){
@@ -617,101 +657,30 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
         cvtColor(visu,visu,CV_BGR2RGB);
         Size size = visu.size();
 
-        if(size.height > 600 & size.width < 1500){
-            display->setFixedHeight(600);
-            display->setFixedWidth((600*size.width)/(size.height));
-        }
+        int w = display->width();
+        int h = display->height();
 
-        else if(size.height < 600 & size.width > 1500){
-            display->setFixedWidth(1500);
-            display->setFixedHeight((1500*size.height)/(size.width));
-        }
-
-        else if(size.height > 600 & size.width > 1500){
-            double c = 600;
-            while((c*size.height)/(size.width) > 1500){
-                display->setFixedWidth((600*size.width)/(size.height));
-                c /= 2;
-            }
-            display->setFixedHeight(c);
-            display->setFixedWidth((c*size.width)/(size.height));
-        }
-
-        else{
-            display->setFixedHeight(size.height);
-            display->setFixedWidth(size.width);
-        }
-
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 
     else if (!normal->isChecked() && binary->isChecked()){
         Size size = cameraFrame.size();
+        int w = display->width();
+        int h = display->height();
 
-        if(size.height > 600 & size.width < 1500){
-            display2->setFixedHeight(600);
-            display2->setFixedWidth((600*size.width)/(size.height));
-        }
-
-        else if(size.height < 600 & size.width > 1500){
-            display2->setFixedWidth(1500);
-            display2->setFixedHeight((1500*size.height)/(size.width));
-        }
-
-        else if(size.height > 600 & size.width > 1500){
-            double c = 600;
-            while((c*size.height)/(size.width) > 1500){
-                display2->setFixedWidth((600*size.width)/(size.height));
-                c /= 2;
-            }
-            display2->setFixedHeight(c);
-            display2->setFixedWidth((c*size.width)/(size.height));
-        }
-
-        else{
-            display2->setFixedHeight(size.height);
-            display2->setFixedWidth(size.width);
-        }
-        display2->move(50, 400);
-        display2->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)));
-        display->clear();
+        display->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)).scaled(w, h, Qt::KeepAspectRatio));
+        display2->clear();
     }
 
     else if (normal->isChecked() && binary->isChecked()){
+        cvtColor(visu,visu,CV_BGR2RGB)
         Size size = cameraFrame.size();
-        cvtColor(visu,visu,CV_BGR2RGB);
+        int w = display->width();
+        int h = display->height();
 
-        if(size.height > 600 & size.width < 750){
-            display->setFixedHeight(600);
-            display->setFixedWidth((600*size.width)/(size.height));
-        }
-
-        else if(size.height < 600 & size.width > 750){
-            display->setFixedWidth(750);
-            display->setFixedHeight((750*size.height)/(size.width));
-        }
-
-        else if(size.height > 600 & size.width > 1500){
-            double c = 600;
-            while((c*size.height)/(size.width) > 1500){
-                display->setFixedWidth((600*size.width)/(size.height));
-                c /= 2;
-            }
-            display->setFixedHeight(c);
-            display->setFixedWidth((c*size.width)/(size.height));
-        }
-
-        else{
-            display->setFixedHeight(size.height);
-            display->setFixedWidth(size.width);
-        }
-
-        display2->move(800, 400);
-        display2->setFixedHeight(display->height());
-        display2->setFixedWidth(display->width());
-        display2->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)));
-        display->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+        display2->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)).scaled(w, h, Qt::KeepAspectRatio));
     }
 
 }

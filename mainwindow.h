@@ -18,6 +18,8 @@
 #include <QComboBox>
 #include <QThread>
 #include <QSpinBox>
+#include <QGridLayout>
+#include <QWidget>
 
 
 
@@ -56,7 +58,8 @@ private:
 
     VideoCapture *camera;
 
-
+    QWidget *central;
+    QGridLayout *layout;
     QLabel *refreshRateLabel;
     QLabel *path;
     QLabel *numLabel;
@@ -139,6 +142,7 @@ private:
     string savePath;
     bool pause;
 
+
 public slots:
     void Go(UMat);
     void Write();
@@ -148,6 +152,7 @@ public slots:
     void UpdateParameters();
     void PlayPause();
     void grabCameraFrame();
+    void back();
 
 signals:
     void frameGrab(UMat cameraFrame);
