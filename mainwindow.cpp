@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     GoButton = new QPushButton("Go", this);
-    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(grabCameraFrame()));
+    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(back()));
 
     PauseButton = new QPushButton("Pause", this);
     pause = true;
@@ -77,12 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
     DefaultButton = new QPushButton("Set as default", this);
     QObject::connect(DefaultButton, SIGNAL(clicked()), this, SLOT(Write()));
 
-    ReplayButton = new QPushButton("Replay", this);
-    QObject::connect(ReplayButton, SIGNAL(clicked()), this, SLOT(Replay()));
-    QSizePolicy spRetain = ReplayButton->sizePolicy();
-    spRetain.setRetainSizeWhenHidden(true);
-    ReplayButton->setSizePolicy(spRetain);
-    ReplayButton ->hide();
 
 
     normal = new QCheckBox("Normal", this);
@@ -302,10 +296,6 @@ MainWindow::MainWindow(QWidget *parent) :
     display->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
 
-
-
-
-
     display2 = new QLabel(this);
     display2->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -360,7 +350,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     layout->addWidget(GoButton, 5, 0);
     layout->addWidget(PauseButton, 5, 1);
-    layout->addWidget(ReplayButton, 5, 2);
     layout->addWidget(DefaultButton, 5, 3);
     layout->addWidget(QuitButton, 5, 4);
     layout->addWidget(ResetButton, 5, 5);
@@ -379,24 +368,21 @@ MainWindow::MainWindow(QWidget *parent) :
     setCentralWidget(central);
 
 
-    camera = new VideoCapture(0);
 
 
-    back();
-    // Execution
+
     im = 0;
     timer = new QTimer(this);
     QObject::connect(timer, SIGNAL(timeout()), this, SLOT(grabCameraFrame())); // Tracking
     QObject::connect(this, SIGNAL(frameGrab(UMat)), this, SLOT(Go(UMat)));
     QObject::connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
-
-    imr = 0;
-    timerReplay = new QTimer(this);
-    connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
-
-
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+}
 
+void MainWindow::cameraInit(){
+    camera = new VideoCapture(pathField->text().toInt());
+    x2ROIField ->setText(QString::number(camera ->get(CV_CAP_PROP_FRAME_WIDTH)));
+    y2ROIField ->setText(QString::number(camera ->get(CV_CAP_PROP_FRAME_HEIGHT)));
 }
 
 void MainWindow::PlayPause(){
@@ -434,13 +420,15 @@ void MainWindow::UpdateParameters(){
 
 void MainWindow::back(){
     int i = 0;
+    cameraInit();
+    nBackground = nBackField->text().toInt();
     camera ->read(cameraFrame);
     cameraFrame.convertTo(cameraFrame, CV_8U);
     cvtColor(cameraFrame, cameraFrame, CV_BGR2GRAY);
     background = cameraFrame.clone();
     background.convertTo(background, CV_32F);
 
-    while(i < 10){
+    while(i < nBackground){
         camera ->read(cameraFrame);
         cameraFrame.convertTo(cameraFrame, CV_32FC1);
         cvtColor(cameraFrame, cameraFrame, CV_BGR2GRAY);
@@ -448,8 +436,9 @@ void MainWindow::back(){
         i++;
     }
     UMat identity = UMat::ones(background.rows, background.cols, CV_32F);
-    multiply(background, identity, background, 1/(10.));
+    multiply(background, identity, background, 1/float(nBackground));
     background.convertTo(background, CV_8U);
+    timer->start(1);
 }
 
 
@@ -492,7 +481,6 @@ void MainWindow::Go(UMat cameraFrame){
         if(im == 0){ // Initialization
 
 
-            timer->start(0);
             UpdateParameters();
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
@@ -576,9 +564,6 @@ void MainWindow::Go(UMat cameraFrame){
 
 
             // Saving
-            coord.x += ROI.tl().x;
-            coord.y += ROI.tl().y;
-            //internalSaving.at(im) = coord;
             ofstream savefile;
             savefile.open(savePath, ios::out | ios::app );
             if(im == 0 && l == 0){
@@ -592,26 +577,11 @@ void MainWindow::Go(UMat cameraFrame){
        emit grabFrame(visu, cameraFrame);
 
 
-       if(im < files.size() - 1){
-           a ++;
-           im ++;
-           progressBar->setValue(im);
-        }
 
-       else{
-           timer->stop();
-           ReplayButton->show();
-           PauseButton ->hide();
-           fps ->show();
-           fpsField ->show();
-           fpsSlider->show();
-           trackingSpot->hide();
-           trackingSpotLabel->hide();
-           im = 0;
-           QMessageBox msgBox;
-           msgBox.setText("The tracking is done, go to work now!!! \n You can replay the tracking by clicking the replay button.");
-           msgBox.exec();
-       }
+       a ++;
+       im ++;
+       progressBar->setValue(im);
+
     }
 
     catch (const Exception &exc){
@@ -674,7 +644,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
     }
 
     else if (normal->isChecked() && binary->isChecked()){
-        cvtColor(visu,visu,CV_BGR2RGB)
+        cvtColor(visu,visu,CV_BGR2RGB);
         Size size = cameraFrame.size();
         int w = display->width();
         int h = display->height();
@@ -693,142 +663,6 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
 
 
 
-void MainWindow::Replay(){
-
-    // Get parameters
-    QString path = pathField->text();
-    QString num = numField->text();
-
-    int arrowSize = arrowField-> value();
-    QString x1ROI = x1ROIField->text();
-    QString x2ROI = x2ROIField->text();
-    QString y1ROI = y1ROIField->text();
-    QString y2ROI = y2ROIField->text();
-
-
-    pathField->setDisabled(true);
-    numField->setDisabled(true);
-    maxAreaField->setDisabled(true);
-    minAreaField->setDisabled(true);
-    lengthField->setDisabled(true);
-    angleField->setDisabled(true);
-    loField->setDisabled(true);
-    wField->setDisabled(true);
-    nBackField->setDisabled(true);
-    threshField->setDisabled(true);
-    saveField->setDisabled(true);
-    x1ROIField->setDisabled(true);
-    x2ROIField->setDisabled(true);
-    y1ROIField->setDisabled(true);
-    y2ROIField->setDisabled(true);
-
-
-
-
-
-    // Convert parameters
-    unsigned int NUMBER = num.toInt(); //number of objects to track
-    int FPS = fpsField->value();
-    FPS = int((1000.)/(float(FPS)));
-
-
-
-
-
-
-
-    if(imr == 0){ // Initialization
-
-        timerReplay->start(FPS);
-        a = files.begin();
-        string name = *a;
-        progressBar ->setRange(0, files.size());
-        visu = imread(name);
-        vector<vector<Point> > tmp(NUMBER, vector<Point>());
-        memory = tmp;
-
-
-    }
-
-
-    string name = *a;
-    visu = imread(name);
-    timerReplay ->setInterval(FPS);
-
-
-
-    // Visualization & saving
-   for(unsigned int l = 0; l < NUMBER; l++){
-        Point3f coord;
-        coord = internalSaving.at(imr*NUMBER + l);
-        //putText(visu, to_string(l), Point(coord.x, coord.y), FONT_HERSHEY_DUPLEX, .5, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), 1);
-        //circle(visu, Point(coord.x, coord.y), 1, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), 2, 2, 0);
-        arrowedLine(visu, Point(coord.x, coord.y), Point(coord.x + 5*arrowSize*cos(coord.z), coord.y - 5*arrowSize*sin(coord.z)), Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 10*arrowSize, 0);
-
-        if((imr > 5)){
-            polylines(visu, memory.at(l), false, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 8, 0);
-            memory.at(l).push_back(Point((int)coord.x, (int)coord.y));
-            if(imr>50){
-                memory.at(l).erase(memory.at(l).begin());
-                }
-        }
-
-
-    }
-
-
-
-   cvtColor(visu,visu,CV_BGR2RGB);
-   Size size = visu.size();
-
-   if(size.height > 600 & size.width < 1500){
-       display->setFixedHeight(600);
-       display->setFixedWidth((600*size.width)/(size.height));
-   }
-
-   else if(size.height < 600 & size.width > 1500){
-       display->setFixedWidth(1500);
-       display->setFixedHeight((1500*size.height)/(size.width));
-   }
-
-   else if(size.height > 600 & size.width > 1500){
-       double c = 600;
-       while((c*size.height)/(size.width) > 1500){
-           display->setFixedWidth((600*size.width)/(size.height));
-           c /= 2;
-       }
-       display->setFixedHeight(c);
-       display->setFixedWidth((c*size.width)/(size.height));
-   }
-
-   else{
-       display->setFixedHeight(size.height);
-       display->setFixedWidth(size.width);
-   }
-
-   display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)));
-   display2->clear();
-
-
-
-
-
-
-
-
-
-    if(imr < files.size() - 1){
-        a ++;
-        imr ++;
-        progressBar->setValue(imr);
-     }
-
-    else{
-        timerReplay->stop();
-        imr = 0;
-    }
-
-}
 
 
 void MainWindow::Write(){

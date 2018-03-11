@@ -50,7 +50,6 @@ private:
     QPushButton *PauseButton;
     QPushButton *DefaultButton;
     QPushButton *ResetButton;
-    QPushButton *ReplayButton;
     QCheckBox *normal;
     QCheckBox *binary;
     QMessageBox *welcomeBox;
@@ -148,11 +147,11 @@ public slots:
     void Write();
     void Reset();
     void Display(Mat visu, UMat cameraFrame);
-    void Replay();
     void UpdateParameters();
     void PlayPause();
     void grabCameraFrame();
     void back();
+    void cameraInit();
 
 signals:
     void frameGrab(UMat cameraFrame);
