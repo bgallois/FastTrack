@@ -208,6 +208,66 @@ vector<double> Orientation(Mat image, bool dir) {
 
 
 
+/**
+  * @Concentration computes the maximal concentration .
+  * @param vector<String> files: list of paths
+  * @return double: C0
+*/
+double Concentration(vector<String> files)
+{
+
+    // Extract the left cycle frames from Milestones.txt
+    double start;
+    double end;
+
+
+    string tmp;
+    int count = 0;
+
+    ifstream mis("Milestones.txt");
+    while (getline(mis, tmp, ' ')){
+        if (count == 6){ // Start frame
+            start = atoi(tmp.c_str());
+        }
+
+        else if (count == 8){ // End frame
+            end = atoi(tmp.c_str());
+        }
+        count++;
+    }
+
+    start += 3000;
+    end -= 500;
+
+    // ROI selection
+    Rect productROI(100, 100, 250, 250);
+    Rect bufferROI(600, 100, 250, 250);
+    UMat tmpImg;
+    UMat bufferImg;
+    UMat productImg;
+    UMat bufferMean;
+    UMat productMean;
+
+
+    for(int i = 0; i < (end - start); ++i){
+        imread(files.at(i), IMREAD_GRAYSCALE).copyTo(tmpImg);
+        tmpImg.convertTo(tmpImg, CV_32FC1);
+        bufferImg = tmpImg(bufferROI);
+        productImg = tmpImg(productROI);
+
+        accumulate(bufferImg, bufferMean);
+        accumulate(bufferImg, productMean);
+    }
+
+    UMat identity = UMat::ones(bufferMean.rows, bufferMean.cols, CV_32F);
+    multiply(bufferMean, identity, bufferMean, 1/(end - start));
+    multiply(productMean, identity, productMean, 1/(end - start));
+
+    return cv::mean(productMean)[0] / cv::mean(bufferMean)[0];
+}
+
+
+
 /**	
   * @BackgroundExtraction extracts the background of a film with moving object by projection
   * @param vector<String> files: array with the path of images

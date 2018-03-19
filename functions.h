@@ -59,6 +59,9 @@ vector<double> Orientation(Mat image, bool dir);
 vector<Point3f> Reassignment(vector<Point3f> inputPrev, vector<Point3f> input, vector<int> assignment);
 
 
+double Concentration(vector<String> files);
+
+
 UMat BackgroundExtraction(vector<String> files, double n);
 
 
