@@ -239,14 +239,19 @@ double Concentration(vector<String> files)
     start += 3000;
     end -= 500;
 
+
+
     // ROI selection
     Rect productROI(100, 100, 250, 250);
     Rect bufferROI(600, 100, 250, 250);
     UMat tmpImg;
-    UMat bufferImg;
-    UMat productImg;
-    UMat bufferMean;
-    UMat productMean;
+    imread(files.at(start), IMREAD_GRAYSCALE).copyTo(tmpImg);
+    UMat bufferImg = tmpImg(bufferROI);
+    UMat productImg = tmpImg(productROI);
+    UMat bufferMean = bufferImg.clone();
+    bufferMean.convertTo(bufferMean, CV_32F);
+    UMat productMean = productImg.clone();
+    productMean.convertTo(productMean, CV_32F);
 
 
     for(int i = 0; i < (end - start); ++i){
