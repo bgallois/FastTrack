@@ -499,14 +499,16 @@ void MainWindow::Go(){
 
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
+        Mat concentrationImg = imread(name, IMREAD_GRAYSCALE);
         visu = imread(name);
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
         cameraFrame = cameraFrame(ROI);
+        subtract(background, concentrationImg, concentrationImg);
         visu = visu(ROI);
 
         // Position computation
-        out = ObjectPosition(cameraFrame, MINAREA, MAXAREA);
+        out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, concentrationImg);
 
 
         if(im == 0){ // First frame initialization
@@ -571,10 +573,10 @@ void MainWindow::Go(){
             ofstream savefile;
             savefile.open(savePath, ios::out | ios::app );
             if(im == 0 && l == 0){
-                savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "\n";
+                savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << '\n';
             }
 
-            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << im << "\n";
+            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << im <<  "   "  << out.at(3).at(l).y << "\n";
 
         }
 

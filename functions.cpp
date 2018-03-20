@@ -268,7 +268,8 @@ double Concentration(vector<String> files)
     productMean.convertTo(productMean, CV_8U);
 
     double c = mean(productMean)[0] - mean(bufferMean)[0] ;
-    cout << c << '\n';
+
+
 
 }
 
@@ -284,19 +285,19 @@ UMat BackgroundExtraction(vector<String> files, double n){
 
     UMat background;
     UMat img0;
-    imread(files[0], IMREAD_GRAYSCALE).copyTo(background);
+    imread(files[999], IMREAD_GRAYSCALE).copyTo(background);
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     background.convertTo(background, CV_32F);
     img0.convertTo(img0, CV_32FC1);
     Rect registrationFrame(0, 0, 200, 50);
-    int step = 5000/n;
+    int step = 4000;
     //Mat tmp = imread(files[0], IMREAD_GRAYSCALE);
     UMat tmp;
     UMat cameraFrameReg;
     Mat H;
     UMat identity = UMat::ones(background.rows, background.cols, CV_32F);
 
-	for(unsigned int i = 1; i < files.size(); i += step){
+    for(unsigned int i = 1000; i < 4000; i++){
         //tmp = imread(files[i], IMREAD_GRAYSCALE);
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
 		tmp.convertTo(tmp, CV_32FC1);
@@ -308,7 +309,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
 		accumulate(tmp, background);
 	}
     //background /= (n-1);
-    multiply(background, identity, background, 1/(n-1));
+    multiply(background, identity, background, 1./(3001.));
     background.convertTo(background, CV_8U);
 
 	return background;
@@ -367,7 +368,7 @@ void Binarisation(UMat frame, char backgroundColor, int value){
 	* @param int maxSize: maximal size of the object
   * @return vector<vector<Point3f>>: {head parameters, tail parameters, global parameter}, {head/tail parameters} = {x, y, orientation}, {global parameter} = {curvature, 0, 0}
 */
-vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize){
+vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu){
 
 	vector<vector<Point> > contours;
 	vector<Point3f> positionHead;
@@ -414,6 +415,21 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize){
                 UMat RoiHead = rotate(roiHead);
 				vector<double> parameterHead = Orientation(RoiHead, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
+
+                // Concentration around the head
+                double concentration = 0;
+                int iti = 0;
+                Mat visuHead = rotate.getMat(ACCESS_READ)(roiHead);
+                for(int row = 0; row < visuHead.rows; row++){
+                    for(int col = 0; col < visuHead.cols; col++){
+                        if (RoiHead.getMat(ACCESS_READ).at<uchar>(row, col) != 255){
+                            concentration += visuHead.at<uchar>(row, col);
+                            iti++;
+                        }
+
+                    }
+                }
+
 				// Tail ellipse
 				Rect roiTail(0, 0, pp.at<double>(0,0), rotate.rows);
                 UMat RoiTail = rotate(roiTail);
@@ -458,7 +474,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize){
 				positionHead.push_back(Point3f(xHead, yHead, angleHead));
 				positionTail.push_back(Point3f(xTail, yTail, angleTail));
                 positionFull.push_back(Point3f(parameter.at(0) + roiFull.tl().x, parameter.at(1) + roiFull.tl().y, parameter.at(2)));
-				globalParam.push_back(Point3f(curv, 0, 0));
+                globalParam.push_back(Point3f(curv, concentration, 0));
 			}
 		}
 
@@ -616,6 +632,10 @@ vector<Point3f> Color(int number){
 
 	return colorMap;
 }
+
+
+
+
 
 
 

@@ -69,7 +69,7 @@ void Registration(UMat imageReference, UMat frame);
 void Binarisation(UMat frame, char backgroundColor, int value);
 
 
-vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize);
+vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
 
 
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGHT, const double ANGLE, const double WEIGHT, const double LO);
