@@ -220,34 +220,44 @@ double Concentration(vector<String> files)
         }
         count++;
     }
+    mis.close();
 
     start += 3000;
-    end -= 500;
+    end  = start + 2000*((start + 2000) < end);
+
 
 
 
     // ROI selection
-    Rect productROI(100, 100, 250, 250);
-    Rect bufferROI(600, 100, 250, 250);
+    Rect ROI(100, 100, 250, 250);
     UMat tmpImg;
-    imread(files.at(start), IMREAD_GRAYSCALE).copyTo(tmpImg);
-    UMat bufferImg = tmpImg(bufferROI);
-    UMat productImg = tmpImg(productROI);
+    imread(files.at(start - (end - start) - 3500), IMREAD_GRAYSCALE).copyTo(tmpImg);
+    UMat bufferImg = tmpImg(ROI);
     UMat bufferMean = bufferImg.clone();
     bufferMean.convertTo(bufferMean, CV_32F);
+    imread(files.at(start), IMREAD_GRAYSCALE).copyTo(tmpImg);
+    UMat productImg = tmpImg(ROI);
     UMat productMean = productImg.clone();
     productMean.convertTo(productMean, CV_32F);
 
 
 
-    for(int i = 0; i < (end - start); ++i){
+    for(int i = start + 1; i < end; ++i){
         imread(files.at(i), IMREAD_GRAYSCALE).copyTo(tmpImg);
         tmpImg.convertTo(tmpImg, CV_32FC1);
-        bufferImg = tmpImg(bufferROI);
-        productImg = tmpImg(productROI);
+        productImg = tmpImg(ROI);
+
+        accumulate(productImg, productMean);
+    }
+
+
+
+    for(int i = start - (end - start) - 3499; i < start - 3500; ++i){
+        imread(files.at(i), IMREAD_GRAYSCALE).copyTo(tmpImg);
+        tmpImg.convertTo(tmpImg, CV_32FC1);
+        bufferImg = tmpImg(ROI);
 
         accumulate(bufferImg, bufferMean);
-        accumulate(productImg, productMean);
     }
 
     UMat identity = UMat::ones(bufferMean.rows, bufferMean.cols, CV_32F);
@@ -259,6 +269,7 @@ double Concentration(vector<String> files)
 
     double c = mean(productMean)[0] - mean(bufferMean)[0] ;
     cout << c << '\n';
+
 }
 
 
@@ -278,7 +289,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
     background.convertTo(background, CV_32F);
     img0.convertTo(img0, CV_32FC1);
     Rect registrationFrame(0, 0, 200, 50);
-    int step = files.size()/n;
+    int step = 5000/n;
     //Mat tmp = imread(files[0], IMREAD_GRAYSCALE);
     UMat tmp;
     UMat cameraFrameReg;
