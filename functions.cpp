@@ -217,21 +217,25 @@ double Concentration(vector<String> files)
 {
 
     // Extract the left cycle frames from Milestones.txt
-    double start;
-    double end;
+    int start;
+    int end;
 
 
     string tmp;
     int count = 0;
+    size_t found = files.at(0).find_last_of("/\\");
+    string path = files.at(0).substr(0, found) + "/Milestones.txt";
+    ifstream mis(path);
+    while (getline(mis, tmp)){
 
-    ifstream mis("Milestones.txt");
-    while (getline(mis, tmp, ' ')){
-        if (count == 6){ // Start frame
-            start = atoi(tmp.c_str());
+        if (count == 3){ // Start frame
+            size_t found = tmp.find_last_of('\t');
+            start = atoi(tmp.substr(0, found).c_str());
         }
 
-        else if (count == 8){ // End frame
-            end = atoi(tmp.c_str());
+        else if (count == 4){ // End frame
+            found = tmp.find_last_of('\t');
+            end = atoi(tmp.substr(0, found).c_str());
         }
         count++;
     }
@@ -254,6 +258,7 @@ double Concentration(vector<String> files)
     productMean.convertTo(productMean, CV_32F);
 
 
+
     for(int i = 0; i < (end - start); ++i){
         imread(files.at(i), IMREAD_GRAYSCALE).copyTo(tmpImg);
         tmpImg.convertTo(tmpImg, CV_32FC1);
@@ -261,14 +266,18 @@ double Concentration(vector<String> files)
         productImg = tmpImg(productROI);
 
         accumulate(bufferImg, bufferMean);
-        accumulate(bufferImg, productMean);
+        accumulate(productImg, productMean);
     }
 
     UMat identity = UMat::ones(bufferMean.rows, bufferMean.cols, CV_32F);
-    multiply(bufferMean, identity, bufferMean, 1/(end - start));
-    multiply(productMean, identity, productMean, 1/(end - start));
+    multiply(bufferMean, identity, bufferMean, 1./double(end - start - 1));
+    multiply(productMean, identity, productMean, 1./double(end - start - 1));
 
-    return cv::mean(productMean)[0] / cv::mean(bufferMean)[0];
+    bufferMean.convertTo(bufferMean, CV_8U);
+    productMean.convertTo(productMean, CV_8U);
+
+    double c = mean(productMean)[0] - mean(bufferMean)[0] ;
+    cout << c << '\n';
 }
 
 
