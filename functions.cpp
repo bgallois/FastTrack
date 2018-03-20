@@ -33,27 +33,6 @@ using namespace std;
 
 
 
-/**
-  * @Moment Computes the moment of order p, q of an image.
-  * @param Mat image: binary image CV_8U
-	* @param int p: order p of the moment
-	* @param int q: order p of the moment
-  * @return double: moment of the image
-*/
-double Moment(Mat image, int p, int q) {
-
-	double m = 0;
-
-	for (int j = 0; j<image.rows; ++j){
-		for (int i = 0; i<image.cols; ++i){
-			m += pow(i, p) * pow(j, q) * image.at<uchar>(j,i);
-		}
-	}
-   return m;
-}
-
-
-
 
 /**
   * @CurvatureCenter Computes the center of the curvature defined as the intersection of the minor axis of the head ellipse with the minor axis of the tail ellipse.
@@ -130,18 +109,20 @@ double Modul(double angle)
   * @param bool dir: if true computes the orientation, if false the orientation is undetermined at +/- PI
   * @return vector<double>: [x, y, orientation]
 */
-vector<double> Orientation(Mat image, bool dir) {
+vector<double> Orientation(UMat image, bool dir) {
 
-	double moo = Moment(image, 0, 0);
 
-	double x = Moment(image, 1, 0)/moo;
-	double y = Moment(image, 0, 1)/moo;
+    Moments moment = moments(image);
 
-	double i = Moment(image, 2, 0)/moo - pow(x, 2);
-	double j = Moment(image, 1, 1)/moo - x*y;
-	double k = Moment(image, 0, 2)/moo - pow(y, 2);
+    double x = moment.m10/moment.m00;
+    double y = moment.m01/moment.m00;
 
-	double orientation = 0.5 * atan((2*j)/(i-k)) + (i<k)*(M_PI*0.5);
+    double i = moment.mu20;
+    double j = moment.mu11;
+    double k = moment.mu02;
+
+
+    double orientation = 0.5 * atan((2*j)/(i-k)) + (i<k)*(M_PI*0.5);
 	orientation += 2*M_PI*(orientation<0);
 	orientation = 2*M_PI - orientation;
 	double orientationDeg = (orientation*180)/M_PI;
@@ -151,9 +132,9 @@ vector<double> Orientation(Mat image, bool dir) {
 		//Two methods available here to compute the direction
 
 		//////////////////////With a rotation of image/////////////////////////////////////
-		Mat rotate;
+        UMat rotate;
 		Point center = Point(image.cols*0.5, image.rows*0.5);
-		Mat rotMatrix = getRotationMatrix2D(center, -orientationDeg, 1);
+        Mat rotMatrix = getRotationMatrix2D(center, -orientationDeg, 1);
 		Rect bbox = RotatedRect(center, image.size(), -orientationDeg).boundingRect();
 		rotMatrix.at<double>(0,2) += bbox.width*0.5 - center.x; //add an off set
 	    rotMatrix.at<double>(1,2) += bbox.height*0.5 - center.y;// to rotate without cropping the frame
@@ -166,7 +147,7 @@ vector<double> Orientation(Mat image, bool dir) {
 		for (int j = 0; j<rotate.cols; ++j){
 		double s = 0;
 			for (int i = 0; i<rotate.rows; ++i){
-			  s += rotate.at<uchar>(i, j);
+              s += rotate.getMat(ACCESS_READ).at<uchar>(i, j);
 			}
 			tmpMat.push_back((double)s);
 		}
@@ -180,7 +161,7 @@ vector<double> Orientation(Mat image, bool dir) {
 		}
 
 
-		double mean = accumulate(tmp.begin(), tmp.end(), 0)/(double)tmp.size();
+        double mean = accumulate(tmp.begin(), tmp.end(), 0)/(double)tmp.size();
 
 
 		double sd = 0 , skew = 0;
@@ -375,14 +356,14 @@ void Binarisation(UMat frame, char backgroundColor, int value){
 	* @param int maxSize: maximal size of the object
   * @return vector<vector<Point3f>>: {head parameters, tail parameters, global parameter}, {head/tail parameters} = {x, y, orientation}, {global parameter} = {curvature, 0, 0}
 */
-vector<vector<Point3f>> ObjectPosition(Mat frame, int minSize, int maxSize){
+vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize){
 
 	vector<vector<Point> > contours;
 	vector<Point3f> positionHead;
 	vector<Point3f> positionTail;
     vector<Point3f> positionFull;
 	vector<Point3f> globalParam;
-	Mat dst;
+    UMat dst;
 
 	findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
@@ -392,11 +373,11 @@ vector<vector<Point3f>> ObjectPosition(Mat frame, int minSize, int maxSize){
 
 			if(contourArea(contours[i]) > minSize && contourArea(contours[i]) < maxSize){ // Only select objects minArea << objectArea <<maxArea
 				
-				dst = Mat::zeros(frame.size(), CV_8U);
+                dst = UMat::zeros(frame.size(), CV_8U);
                 drawContours(dst, contours, i, Scalar(255, 255, 255), CV_FILLED,8); // Draw the fish in a temporary black image,avoid select a part of another fish if two fish are very close
 				
 				Rect roiFull = boundingRect(contours[i]);
-				Mat RoiFull = dst(roiFull);
+                UMat RoiFull = dst(roiFull);
 
 				vector<double> parameter;
 				parameter = Orientation(RoiFull, true); // In RoiFull coordinates: x, y, orientation
@@ -405,8 +386,8 @@ vector<vector<Point3f>> ObjectPosition(Mat frame, int minSize, int maxSize){
 
 
 				Point center = Point(0.5*RoiFull.cols, 0.5*RoiFull.rows);
-				Mat rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);
-				Mat rotate;
+                Mat rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);
+                UMat rotate;
 				Rect bbox = RotatedRect(center, RoiFull.size(), -(parameter.at(2)*180)/M_PI).boundingRect();
 				rotMatrix.at<double>(0,2) += bbox.width*0.5 - center.x; //add an off set
     			rotMatrix.at<double>(1,2) += bbox.height*0.5 - center.y;// to rotate without cropping the frame
@@ -419,12 +400,12 @@ vector<vector<Point3f>> ObjectPosition(Mat frame, int minSize, int maxSize){
 
 				// Head ellipse
 				Rect roiHead(pp.at<double>(0,0), 0, rotate.cols-pp.at<double>(0,0), rotate.rows);
-				Mat RoiHead = rotate(roiHead);
+                UMat RoiHead = rotate(roiHead);
 				vector<double> parameterHead = Orientation(RoiHead, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
 				// Tail ellipse
 				Rect roiTail(0, 0, pp.at<double>(0,0), rotate.rows);
-				Mat RoiTail = rotate(roiTail);
+                UMat RoiTail = rotate(roiTail);
 				vector<double> parameterTail = Orientation(RoiTail, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
 
@@ -456,10 +437,10 @@ vector<vector<Point3f>> ObjectPosition(Mat frame, int minSize, int maxSize){
 
 
 				//Curvature
-				double curv = 1/1e-16;
+                double curv = 1./1e-16;
 				Point2f radiusCurv = CurvatureCenter(Point3f(xTail, yTail, angleTail), Point3f(xHead, yHead, angleHead));
 				if(radiusCurv.x != NAN){ // 
-					curv = Curvature(radiusCurv, RoiFull);
+                    curv = Curvature(radiusCurv, RoiFull.getMat(ACCESS_READ));
 				}
 
 

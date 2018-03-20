@@ -41,8 +41,6 @@ using namespace std;
 
 
 
-double Moment(Mat image, int p, int q);
-
 
 Point2f CurvatureCenter(Point3f tail, Point3f head);
 
@@ -53,7 +51,7 @@ double Curvature(Point2f center , Mat image);
 double Modul(double angle);
 
 
-vector<double> Orientation(Mat image, bool dir);
+vector<double> Orientation(UMat image, bool dir);
 
 
 vector<Point3f> Reassignment(vector<Point3f> inputPrev, vector<Point3f> input, vector<int> assignment);
@@ -71,7 +69,7 @@ void Registration(UMat imageReference, UMat frame);
 void Binarisation(UMat frame, char backgroundColor, int value);
 
 
-vector<vector<Point3f> > ObjectPosition(Mat frame, int minSize, int maxSize);
+vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize);
 
 
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGHT, const double ANGLE, const double WEIGHT, const double LO);
