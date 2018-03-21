@@ -419,12 +419,18 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 // Concentration around the head
                 double concentration = 0;
                 int iti = 0;
-                Mat visuHead = rotate.getMat(ACCESS_READ)(roiHead);
-                for(int row = 0; row < visuHead.rows; row++){
-                    for(int col = 0; col < visuHead.cols; col++){
+                warpAffine(visu(roiFull), visu, rotMatrix, bbox.size());
+                Mat RoiVisu = visu(roiHead);
+                double val;
+                //imshow("lol", visu(roiHead));
+                for(int row = 0; row < RoiHead.rows; row++){
+                    for(int col = 0; col < RoiHead.cols; col++){
+                        val = RoiVisu.at<uchar>(row, col);
                         if (RoiHead.getMat(ACCESS_READ).at<uchar>(row, col) != 255){
-                            concentration += visuHead.at<uchar>(row, col);
-                            iti++;
+                                if (val != 0){
+                                    concentration += val;
+                                    iti++;
+                            }
                         }
 
                     }

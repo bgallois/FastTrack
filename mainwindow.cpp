@@ -499,13 +499,14 @@ void MainWindow::Go(){
 
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
-        Mat concentrationImg = imread(name, IMREAD_GRAYSCALE);
+        concentrationImg = imread(name, IMREAD_GRAYSCALE);
         visu = imread(name);
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
         cameraFrame = cameraFrame(ROI);
         subtract(background, concentrationImg, concentrationImg);
         visu = visu(ROI);
+        concentrationImg = concentrationImg(ROI);
 
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, concentrationImg);

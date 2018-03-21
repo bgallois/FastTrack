@@ -111,8 +111,9 @@ private:
 
     UMat cameraFrame;
     Mat visu;
-    UMat img0;;
-    UMat background;;
+    UMat img0;
+    UMat background;
+    Mat concentrationImg;
     vector<vector<Point> > memory;
     vector<Point3f> colorMap;
     vector<vector<Point3f> > out;
