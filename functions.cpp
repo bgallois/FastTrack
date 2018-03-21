@@ -376,6 +376,13 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
     vector<Point3f> positionFull;
 	vector<Point3f> globalParam;
     UMat dst;
+    Rect roiFull, bbox;
+    UMat RoiFull, RoiHead, RoiTail, rotate;
+    Mat rotMatrix, p, pp;
+    vector<double> parameter;
+    vector<double> parameterHead;
+    vector<double> parameterTail;
+    Point2f radiusCurv;
 
 	findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
@@ -388,32 +395,31 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 dst = UMat::zeros(frame.size(), CV_8U);
                 drawContours(dst, contours, i, Scalar(255, 255, 255), CV_FILLED,8); // Draw the fish in a temporary black image,avoid select a part of another fish if two fish are very close
 				
-				Rect roiFull = boundingRect(contours[i]);
-                UMat RoiFull = dst(roiFull);
+                roiFull = boundingRect(contours[i]);
+                RoiFull = dst(roiFull);
 
-				vector<double> parameter;
 				parameter = Orientation(RoiFull, true); // In RoiFull coordinates: x, y, orientation
 				double angleFull = parameter.at(2);
 
 
 
 				Point center = Point(0.5*RoiFull.cols, 0.5*RoiFull.rows);
-                Mat rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);
-                UMat rotate;
-				Rect bbox = RotatedRect(center, RoiFull.size(), -(parameter.at(2)*180)/M_PI).boundingRect();
+                rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);
+                rotate;
+                bbox = RotatedRect(center, RoiFull.size(), -(parameter.at(2)*180)/M_PI).boundingRect();
 				rotMatrix.at<double>(0,2) += bbox.width*0.5 - center.x; //add an off set
     			rotMatrix.at<double>(1,2) += bbox.height*0.5 - center.y;// to rotate without cropping the frame
 				warpAffine(RoiFull, rotate, rotMatrix, bbox.size());
 
-				Mat p = (Mat_<double>(3,1) << parameter.at(0), parameter.at(1), 1);
+                p = (Mat_<double>(3,1) << parameter.at(0), parameter.at(1), 1);
 				
-				Mat pp = rotMatrix * p; // center of mass of fish in  the rotated coordinate system
+                pp = rotMatrix * p; // center of mass of fish in  the rotated coordinate system
 
 
 				// Head ellipse
-				Rect roiHead(pp.at<double>(0,0), 0, rotate.cols-pp.at<double>(0,0), rotate.rows);
-                UMat RoiHead = rotate(roiHead);
-				vector<double> parameterHead = Orientation(RoiHead, false); // In RoiHead coordinates: xHead, yHead, orientationHead
+                Rect roiHead(pp.at<double>(0,0), 0, rotate.cols-pp.at<double>(0,0), rotate.rows);
+                RoiHead = rotate(roiHead);
+                parameterHead = Orientation(RoiHead, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
 
                 // Concentration around the head
@@ -437,9 +443,9 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 }
 
 				// Tail ellipse
-				Rect roiTail(0, 0, pp.at<double>(0,0), rotate.rows);
-                UMat RoiTail = rotate(roiTail);
-				vector<double> parameterTail = Orientation(RoiTail, false); // In RoiHead coordinates: xHead, yHead, orientationHead
+                Rect roiTail(0, 0, pp.at<double>(0,0), rotate.rows);
+                RoiTail = rotate(roiTail);
+                parameterTail = Orientation(RoiTail, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
 
 				invertAffineTransform(rotMatrix, rotMatrix);
@@ -471,7 +477,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
 				//Curvature
                 double curv = 1./1e-16;
-				Point2f radiusCurv = CurvatureCenter(Point3f(xTail, yTail, angleTail), Point3f(xHead, yHead, angleHead));
+                radiusCurv = CurvatureCenter(Point3f(xTail, yTail, angleTail), Point3f(xHead, yHead, angleHead));
 				if(radiusCurv.x != NAN){ // 
                     curv = Curvature(radiusCurv, RoiFull.getMat(ACCESS_READ));
 				}
