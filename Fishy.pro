@@ -33,7 +33,7 @@ QMAKE_CXXFLAGS += -std=c++11
 
 
 INCLUDEPATH += /usr/include/opencv
-LIBS += -L /usr/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lopencv_video
+LIBS += -L /usr/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lopencv_video -lopencv_photo
 
 HEADERS += \
         mainwindow.h\

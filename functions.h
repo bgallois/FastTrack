@@ -28,6 +28,7 @@
 #define FUNCTIONS_H
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/photo/photo.hpp>
 #include <iostream>
 #include <string>
 #include <time.h>
@@ -67,6 +68,8 @@ void Registration(UMat imageReference, UMat frame);
 
 
 void Binarisation(UMat frame, char backgroundColor, int value);
+void ConcentrationMap(Mat& visu, UMat cameraFrame);
+
 
 
 vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
