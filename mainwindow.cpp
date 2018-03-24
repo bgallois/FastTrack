@@ -482,7 +482,7 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
-            double concentration = Concentration(files);
+            //double concentration = Concentration(files);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
@@ -512,6 +512,7 @@ void MainWindow::Go(){
         subtract(background, visu, visu);
         visu = visu(ROI);
         //concentrationImg = concentrationImg(ROI);
+
 
         ConcentrationMap(visu, cameraFrame);
 
@@ -656,7 +657,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
     }
 
     else if (normal->isChecked() && !binary->isChecked()){
-        //cvtColor(visu,visu,COLOR_GRAY2BGR);
+        cvtColor(visu,visu,CV_BGR2RGB);
         Size size = visu.size();
 
         int w = display->width();
