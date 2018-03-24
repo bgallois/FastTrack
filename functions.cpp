@@ -359,10 +359,21 @@ void Binarisation(UMat frame, char backgroundColor, int value){
 }
 
 
+
+
+/**
+  * @ConcentrationMap deletes all white region in the binary image and apply filter to have a smooth map of the concentration
+  * @param Mat& visu: input output image to have the concentration map
+  * @param UMat cameraFrame: binary mask
+*/
+
+
 void ConcentrationMap(Mat& visu, UMat cameraFrame){
-
-
-    //inpaint(visu, cameraFrame, visu, 50, INPAINT_TELEA);
+    Mat cameraFrameDilated;
+    int morph_size = 10;
+    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(morph_size + 1, morph_size + 1), Point( morph_size, morph_size ));
+    dilate(cameraFrame, cameraFrameDilated, element );
+    inpaint(visu, cameraFrameDilated, visu, 50, INPAINT_TELEA);
     normalize(visu, visu, 0, 255, NORM_MINMAX);
     applyColorMap(visu, visu, COLORMAP_JET);
 }

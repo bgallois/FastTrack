@@ -68,14 +68,16 @@ void Registration(UMat imageReference, UMat frame);
 
 
 void Binarisation(UMat frame, char backgroundColor, int value);
-void ConcentrationMap(Mat& visu, UMat cameraFrame);
 
+
+void ConcentrationMap(Mat& visu, UMat cameraFrame);
 
 
 vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
 
 
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGHT, const double ANGLE, const double WEIGHT, const double LO);
+
 
 vector<Point3f> Prevision(vector<Point3f> past, vector<Point3f> present);
 
