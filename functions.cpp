@@ -370,10 +370,11 @@ void Binarisation(UMat frame, char backgroundColor, int value){
 
 void ConcentrationMap(Mat& visu, UMat cameraFrame){
     Mat cameraFrameDilated;
-    int morph_size = 10;
-    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(morph_size + 1, morph_size + 1), Point( morph_size, morph_size ));
+    int morph_size = 15;
+    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
     dilate(cameraFrame, cameraFrameDilated, element );
     inpaint(visu, cameraFrameDilated, visu, 50, INPAINT_TELEA);
+    GaussianBlur(visu, visu, Size(3, 3), 0, 0 );
     normalize(visu, visu, 0, 255, NORM_MINMAX);
     applyColorMap(visu, visu, COLORMAP_JET);
 }
