@@ -374,7 +374,7 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
     inpaint(visu, cameraFrameDilated, visu, 4, INPAINT_NS);
     //medianBlur(visu, visu, 11 );
     //normalize(visu, visu, 0, 255, NORM_MINMAX);
-    //applyColorMap(visu, visu, COLORMAP_JET);
+    applyColorMap(visu, visu, COLORMAP_JET);
 }
 
 

@@ -508,17 +508,10 @@ void MainWindow::Go(){
 
         cameraFrame = cameraFrame(ROI);
 
-        /*Mat tmp;
+        Mat tmp;
         background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 128);
         visu.convertTo(visu, CV_8U, 0.5, 0);
-        subtract(tmp, visu, visu);*/
-        imshow("lol", background);
-
-        Mat tmp;
-        background.getMat(ACCESS_READ).convertTo(tmp, CV_16U, 1, 255);
-        visu.convertTo(visu, CV_16U, 1, 255);
         subtract(tmp, visu, visu);
-
 
         visu = visu(ROI);
 
@@ -673,7 +666,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
         int w = display->width();
         int h = display->height();
 
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB32)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 
