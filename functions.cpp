@@ -288,7 +288,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
     imread(files[999], IMREAD_GRAYSCALE).copyTo(background);
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     background.convertTo(background, CV_32F);
-    img0.convertTo(img0, CV_32FC1);
+    img0.convertTo(img0, CV_32F);
     Rect registrationFrame(0, 0, 200, 50);
     int step = 4000;
     //Mat tmp = imread(files[0], IMREAD_GRAYSCALE);
@@ -300,7 +300,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
     for(unsigned int i = 1000; i < 4000; i++){
         //tmp = imread(files[i], IMREAD_GRAYSCALE);
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
-        tmp.convertTo(tmp, CV_32FC1);
+        tmp.convertTo(tmp, CV_32F);
         cameraFrameReg = tmp(registrationFrame);
         img0 = img0(registrationFrame);
         Point2d shift = phaseCorrelate(cameraFrameReg, img0);
@@ -366,17 +366,15 @@ void Binarisation(UMat frame, char backgroundColor, int value){
   * @param Mat& visu: input output image to have the concentration map
   * @param UMat cameraFrame: binary mask
 */
-
-
 void ConcentrationMap(Mat& visu, UMat cameraFrame){
     Mat cameraFrameDilated;
-    int morph_size = 25;
+    int morph_size = 11;
     Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
     dilate(cameraFrame, cameraFrameDilated, element );
-    inpaint(visu, cameraFrameDilated, visu, 2, INPAINT_NS);
-    medianBlur(visu, visu, 11 );
-    normalize(visu, visu, 0, 255, NORM_MINMAX);
-    applyColorMap(visu, visu, COLORMAP_JET);
+    inpaint(visu, cameraFrameDilated, visu, 4, INPAINT_NS);
+    //medianBlur(visu, visu, 11 );
+    //normalize(visu, visu, 0, 255, NORM_MINMAX);
+    //applyColorMap(visu, visu, COLORMAP_JET);
 }
 
 
@@ -443,30 +441,6 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 parameterHead = Orientation(RoiHead, false); // In RoiHead coordinates: xHead, yHead, orientationHead
 
 
-                // Concentration around the head
-                double concentration = 0;
-                /*int iti = 0;
-                Rect RoiConcentration(roiHead.x, parameterHead.at(1) - 10, roiHead.width, 20);
-
-
-                visu = visu(roiFull);
-                warpAffine(visu, visu, rotMatrix, bbox.size());
-                Mat RoiVisu = visu(RoiConcentration);
-                imshow("lol", RoiVisu);
-                double val;
-                for(int row = 0; row < RoiHead.rows; row++){
-                    for(int col = 0; col < RoiHead.cols; col++){
-                        val = RoiVisu.at<uchar>(row, col);
-                        if (RoiHead.getMat(ACCESS_READ).at<uchar>(row, col) != 255){
-                                if (val != 0){
-                                    concentration += val;
-                                    iti++;
-                            }
-                        }
-
-                    }
-                }
-                concentration /= iti;*/
 
                 // Tail ellipse
                 Rect roiTail(0, 0, pp.at<double>(0,0), rotate.rows);
@@ -508,6 +482,18 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                     curv = Curvature(radiusCurv, RoiFull.getMat(ACCESS_READ));
                 }
 
+
+                // Concentration around the head
+                Rect RoiConcentration(parameterHead.at(0) - 10, parameterHead.at(1) - 10, 20, 20);
+                if(RoiConcentration.tl().x < 0 || RoiConcentration.tl().x + RoiConcentration.width > visu.cols){
+                   Rect RoiConcentration(parameterHead.at(0) - 2, parameterHead.at(1) - 10, 4, 20);
+                }
+                if(RoiConcentration.tl().y < 0 || RoiConcentration.tl().y + RoiConcentration.height > visu.rows){
+                   Rect RoiConcentration(RoiConcentration.tl().x, parameterHead.at(1) - 2, RoiConcentration.width, 4);
+                }
+
+                Mat RoiVisu = visu(RoiConcentration);
+                double concentration = mean(RoiVisu)[0];
 
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
                 positionTail.push_back(Point3f(xTail, yTail, angleTail));

@@ -501,17 +501,27 @@ void MainWindow::Go(){
 
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
-        //concentrationImg = imread(name, IMREAD_GRAYSCALE);
         visu = cameraFrame.getMat(ACCESS_FAST).clone();
 
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
         cameraFrame = cameraFrame(ROI);
-        //subtract(background, concentrationImg, concentrationImg);
-        subtract(background, visu, visu);
+
+        /*Mat tmp;
+        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 128);
+        visu.convertTo(visu, CV_8U, 0.5, 0);
+        subtract(tmp, visu, visu);*/
+        imshow("lol", background);
+
+        Mat tmp;
+        background.getMat(ACCESS_READ).convertTo(tmp, CV_16U, 1, 255);
+        visu.convertTo(visu, CV_16U, 1, 255);
+        subtract(tmp, visu, visu);
+
+
         visu = visu(ROI);
-        //concentrationImg = concentrationImg(ROI);
+
 
 
         ConcentrationMap(visu, cameraFrame);
@@ -519,7 +529,7 @@ void MainWindow::Go(){
 
 
         // Position computation
-        out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, concentrationImg);
+        out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
 
 
         if(im == 0){ // First frame initialization
@@ -657,13 +667,13 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
     }
 
     else if (normal->isChecked() && !binary->isChecked()){
-        cvtColor(visu,visu,CV_BGR2RGB);
+        //cvtColor(visu,visu,CV_BGR2RGB);
         Size size = visu.size();
 
         int w = display->width();
         int h = display->height();
 
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB32)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 
