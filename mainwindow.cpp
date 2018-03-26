@@ -666,7 +666,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
         int w = display->width();
         int h = display->height();
 
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_Grayscale8)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 

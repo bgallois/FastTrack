@@ -374,7 +374,7 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
     inpaint(visu, cameraFrameDilated, visu, 4, INPAINT_NS);
     //medianBlur(visu, visu, 11 );
     //normalize(visu, visu, 0, 255, NORM_MINMAX);
-    applyColorMap(visu, visu, COLORMAP_JET);
+    //applyColorMap(visu, visu, COLORMAP_JET);
 }
 
 
@@ -484,12 +484,12 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
 
                 // Concentration around the head
-                Rect RoiConcentration(parameterHead.at(0) - 10, parameterHead.at(1) - 10, 20, 20);
+                Rect RoiConcentration(xHead - 10, yHead - 10, 20, 20);
                 if(RoiConcentration.tl().x < 0 || RoiConcentration.tl().x + RoiConcentration.width > visu.cols){
-                   Rect RoiConcentration(parameterHead.at(0) - 2, parameterHead.at(1) - 10, 4, 20);
+                   Rect RoiConcentration(xHead - 2, yHead - 10, 4, 20);
                 }
                 if(RoiConcentration.tl().y < 0 || RoiConcentration.tl().y + RoiConcentration.height > visu.rows){
-                   Rect RoiConcentration(RoiConcentration.tl().x, parameterHead.at(1) - 2, RoiConcentration.width, 4);
+                   Rect RoiConcentration(RoiConcentration.tl().x, yHead - 2, RoiConcentration.width, 4);
                 }
 
                 Mat RoiVisu = visu(RoiConcentration);
