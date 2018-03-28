@@ -338,6 +338,31 @@ void Registration(UMat imageReference, UMat frame){
 
 
 
+/**
+ * @brief A refaire mieux
+ * @param name
+ * @return
+ */
+string Metadata(string name){
+    string line;
+    string buffer[2];
+    ifstream file(name);
+
+    const size_t size = 2;
+    size_t i = 0;
+
+
+    while(getline(file, line)){
+        buffer[i] = line;
+        if (++i >= size){
+                 i = 0;
+              }
+
+    }
+    return buffer[0];
+
+}
+
 
 /**
   * @Binarisation binarizes the image by an Otsu threshold
@@ -368,11 +393,11 @@ void Binarisation(UMat frame, char backgroundColor, int value){
 */
 void ConcentrationMap(Mat& visu, UMat cameraFrame){
     Mat cameraFrameDilated;
-    int morph_size = 11;
+    int morph_size = 17;
     Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
     dilate(cameraFrame, cameraFrameDilated, element );
-    inpaint(visu, cameraFrameDilated, visu, 4, INPAINT_NS);
-    //medianBlur(visu, visu, 11 );
+    inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
+    //medianBlur(visu, visu, 7 );
     //normalize(visu, visu, 0, 255, NORM_MINMAX);
     //applyColorMap(visu, visu, COLORMAP_JET);
 }
@@ -484,16 +509,16 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
 
                 // Concentration around the head
-                Rect RoiConcentration(xHead - 10, yHead - 10, 20, 20);
-                if(RoiConcentration.tl().x < 0 || RoiConcentration.tl().x + RoiConcentration.width > visu.cols){
-                   Rect RoiConcentration(xHead - 2, yHead - 10, 4, 20);
-                }
-                if(RoiConcentration.tl().y < 0 || RoiConcentration.tl().y + RoiConcentration.height > visu.rows){
-                   Rect RoiConcentration(RoiConcentration.tl().x, yHead - 2, RoiConcentration.width, 4);
-                }
+                double concentration;
+                try{
+                    Rect RoiConcentration(xHead - 10, yHead - 10, 20, 20);
 
-                Mat RoiVisu = visu(RoiConcentration);
-                double concentration = mean(RoiVisu)[0];
+                    Mat RoiVisu = visu(RoiConcentration);
+                    concentration = mean(RoiVisu)[0];
+                }
+                catch(...){
+                    concentration = NAN;
+                }
 
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
                 positionTail.push_back(Point3f(xTail, yTail, angleTail));

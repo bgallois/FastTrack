@@ -19,10 +19,12 @@ class Trajectory:
 
 
     def __init__(self, path):
-        self.data = pd.read_csv(path + 'tracking.txt', sep="  ", engine='python')
-        #self.Milestones = pd.read_csv(path + 'Milestones.txt',  header=None, sep="    ", engine='python')
+        self.data = pd.read_csv(path + 'tracking.txt', sep="  ", engine='python',na_values=[' nan'])
+        self.Milestones = pd.read_csv(path + 'Milestones.txt', sep='\t', engine='python', header=None)
+        self.data = self.data.dropna()
         self.nmax = self.objectNumber()
         self.index, self.shiftIndex = self.indexing()
+
 
 
 
@@ -175,12 +177,16 @@ class Trajectory:
         
         TOOLS="hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,reset,tap,save,box_select,poly_select,lasso_select,"
         p = figure(tools=TOOLS, x_axis_label = "x position", y_axis_label = "Time")
-        colors = ["#%02x%02x%02x" % (int(r), int(g), int(b)) for r, g, b, _ in 255*mpl.cm.viridis(mpl.colors.Normalize()(c.values))]
-        p.scatter(x, t, color=colors, fill_alpha=1, line_color=None)
-        colorMapper = LogColorMapper(palette="Viridis256", low=np.percentile(c, 5), high=np.percentile(c, 95))
+        colorMapper = LinearColorMapper(palette="Viridis256", low=np.percentile(c, 5), high=np.percentile(c, 95))
         colorBar = ColorBar(color_mapper=colorMapper, ticker=LogTicker(),
                      label_standoff=12, border_line_color=None, location=(0,0), title="Concentration")
         p.add_layout(colorBar, 'right')
+        source = ColumnDataSource(dict(x=x, y=t, z=c.values))
+        p.circle(x='x', y='y', fill_color={'field': 'z', 'transform': colorMapper}, line_color=None, source=source)
+
+        for i in self.Milestones[0][:]:
+            print(i)
+            p.line([0, 1000], [i, i], line_width=2)
 
         output_file("scatter.html")
 
@@ -273,7 +279,7 @@ fig3.addLabels(xlabel = 'Concentration g/L', ylabel = "Normalized preference ind
 
 bp.show()'''
 
-B = Trajectory('/run/media/benjamin/HardDisk/Behavior/DualTemporary/Run 1.02/')
+B = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/2018-02-28/Run 1.02/')
 B.concentrationPlot(0)
 
 x, _, _, t = B.getHeadPosition(0)
@@ -281,6 +287,9 @@ c = B.getConcentration(0)
 print(np.argmax(c), np.max(c))
 
 
+file = open('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/2018-02-28/Run 1.02/Frame_000000.pgm', 'rb')
+fileList = file.readlines()[-2]
 
-
+file.close()
+print(fileList)
 

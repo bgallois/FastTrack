@@ -10,6 +10,7 @@
 #include <functions.h>
 
 
+
 using namespace cv;
 using namespace std;
 
@@ -501,23 +502,22 @@ void MainWindow::Go(){
 
         Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
+        string metadata = Metadata(name);
+
         visu = cameraFrame.getMat(ACCESS_FAST).clone();
 
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
-        cameraFrame = cameraFrame(ROI);
-
         Mat tmp;
-        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 128);
-        visu.convertTo(visu, CV_8U, 0.5, 0);
-        subtract(tmp, visu, visu);
-
-        visu = visu(ROI);
-
-
+        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
+        visu.convertTo(visu, CV_8U, 0.5, 128);
+        subtract(visu, tmp, visu);
 
         ConcentrationMap(visu, cameraFrame);
+
+        cameraFrame = cameraFrame(ROI);
+        visu = visu(ROI);
 
 
 
@@ -590,7 +590,7 @@ void MainWindow::Go(){
                 savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << '\n';
             }
 
-            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << im <<  "   "  << out.at(3).at(l).y << "\n";
+            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y << "\n";
 
         }
 
@@ -654,24 +654,26 @@ void MainWindow::Go(){
 
 void MainWindow::Display(Mat visu, UMat cameraFrame){
 
+    normalize(visu, visu, 0, 255, NORM_MINMAX);
+    applyColorMap(visu, visu, COLORMAP_JET);
+
     if (!normal->isChecked() && !binary->isChecked()){
         display->clear();
         display2->clear();
     }
 
     else if (normal->isChecked() && !binary->isChecked()){
-        //cvtColor(visu,visu,CV_BGR2RGB);
+        cvtColor(visu,visu,CV_BGR2RGB);
         Size size = visu.size();
 
         int w = display->width();
         int h = display->height();
 
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_Grayscale8)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 
     else if (!normal->isChecked() && binary->isChecked()){
-        cvtColor(visu,visu,CV_BGR2RGB);
         Size size = cameraFrame.size();
         int w = display->width();
         int h = display->height();
@@ -681,7 +683,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
     }
 
     else if (normal->isChecked() && binary->isChecked()){
-        //cvtColor(visu,visu,CV_BGR2RGB);
+        cvtColor(visu,visu,CV_BGR2RGB);
         Size size = cameraFrame.size();
         int w = display->width();
         int h = display->height();

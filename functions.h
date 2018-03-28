@@ -71,6 +71,7 @@ void Binarisation(UMat frame, char backgroundColor, int value);
 
 
 void ConcentrationMap(Mat& visu, UMat cameraFrame);
+string Metadata(string name);
 
 
 vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
