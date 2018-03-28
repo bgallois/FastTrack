@@ -359,7 +359,9 @@ string Metadata(string name){
               }
 
     }
-    return buffer[0];
+    size_t found = buffer[0].find(":");
+
+    return buffer[0].substr(found+1);
 
 }
 
