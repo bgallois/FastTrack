@@ -19,23 +19,29 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
+    // Setup the ui
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
 
+    // Setup style
     QFile stylesheet(":/darkTheme.qss");
-    if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+
+    if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) { // Read the theme file
         qApp->setStyleSheet(stylesheet.readAll());
         stylesheet.close();
     }
-    else{
-        cout << "error" << '\n';
+
+    else{ // If the theme is not found print an error (for dev purpose)
+        cout << "Theme not found" << '\n';
     }
 
 
     // Welcome message
     welcomeBox = new QMessageBox;
-    welcomeBox ->setText("Check new version at https://bgallois.github.io/FishyTracking/.\n © Benjamin GALLOIS benjamin.gallois@upmc.fr. \n Subscribe to the mailing list to be kept informed of new releases and new features: http://benjamin-gallois.fr/fishyTracking.html");
+    welcomeBox ->setText("Check new versions at https://bgallois.github.io/FishyTracking/.\n © Benjamin GALLOIS benjamin.gallois@upmc.fr. \n Subscribe to the mailing list to be kept informed of new releases and new features: http://benjamin-gallois.fr/fishyTracking.html");
+
 
     // Default parameters reading
     QStringList defParameters;
@@ -45,10 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
             return;
 
-
         QTextStream in(&file);
 
-        while(!in.atEnd()) {
+        while(!in.atEnd()) { // Create parameters file
             QString line = in.readLine();
             defParameters.append(line);
         }
@@ -64,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
             i++;
         }
     }
+
 
     // Widgets layout
 
@@ -218,8 +224,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     saveField = new QLineEdit(this);
     saveField->setText(defParameters.at(10));
-
-    QObject::connect(pathField, SIGNAL(textChanged(QString)), saveField, SLOT(setText(QString)));
+    QObject::connect(pathField, SIGNAL(textChanged(QString)), this, SLOT(setSavePath(QString)));
 
 
     x1ROI = new QLabel(this);
@@ -389,14 +394,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    im = 0;
-    timer = new QTimer(this);
+    // Initialization
+
+    im = 0; // Internal counter
+    timer = new QTimer(this); // Tracking timer
     timer ->setInterval(1);
     connect(timer, SIGNAL(timeout()), this, SLOT(Go())); // Tracking
     connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
 
-    imr = 0;
-    timerReplay = new QTimer(this);
+    imr = 0; // Internal counter for the replay
+    timerReplay = new QTimer(this); 
     connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
 
 
@@ -404,14 +411,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
+
+
 void MainWindow::PlayPause(){
-    if (pause){
+    if (pause){ // Pause button pressed
         PauseButton ->setText("Play");
         timer ->stop();
         pause = false;
     }
 
-    else if (pause == false){
+    else if (pause == false){ // Play button pressed
         PauseButton ->setText("Pause");
         x2ROIField->setStyleSheet("background-color: black;");
         y2ROIField->setStyleSheet("background-color: black;");
@@ -876,6 +885,13 @@ void MainWindow::checkPath(QString path){
 
 }
 
+
+void MainWindow::setSavePath(QString path){
+    string folder = path.toStdString();
+    size_t found = folder.find("/*");
+    string savePath = folder.substr (0,found) + "/tracking.txt";
+    saveField->setText(QString::fromStdString(savePath));
+}
 
 
 MainWindow::~MainWindow()
