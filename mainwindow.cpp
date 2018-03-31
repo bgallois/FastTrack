@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
 
-    QFile stylesheet("/home/lafamillegallois/Documents/FishyTracking/darkTheme.css");
+    QFile stylesheet(":/darkTheme.qss");
     if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qApp->setStyleSheet(stylesheet.readAll());
         stylesheet.close();
