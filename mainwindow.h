@@ -54,7 +54,7 @@ private:
     QCheckBox *normal;
     QCheckBox *binary;
     QMessageBox *welcomeBox;
-    QString version = "v3.6.0";
+    QString version = "v3.6.1";
 
     QWidget *central;
     QLayout *layout;

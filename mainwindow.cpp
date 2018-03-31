@@ -23,6 +23,15 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
 
+    QFile stylesheet("/home/lafamillegallois/Documents/FishyTracking/darkTheme.css");
+    if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qApp->setStyleSheet(stylesheet.readAll());
+        stylesheet.close();
+    }
+    else{
+        cout << "error" << '\n';
+    }
+
 
     // Welcome message
     welcomeBox = new QMessageBox;
@@ -303,9 +312,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-
     display2 = new QLabel(this);
     display2->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -375,6 +381,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     central = new QWidget(this);
+    central->setObjectName("central");
     central->setLayout(layout);
     setCentralWidget(central);
 
@@ -615,7 +622,7 @@ void MainWindow::Go(){
            trackingSpotLabel->hide();
            im = 0;
            QMessageBox msgBox;
-           msgBox.setText("The tracking is done, go to work now!!! \n You can replay the tracking by clicking the replay button.");
+           msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
            msgBox.exec();
        }
     }
