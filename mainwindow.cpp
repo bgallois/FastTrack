@@ -512,6 +512,7 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
+            background.convertTo(background, CV_8U, 0.5, 0);
             //double concentration = Concentration(files);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
@@ -538,10 +539,8 @@ void MainWindow::Go(){
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
-        Mat tmp;
-        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
         visu.convertTo(visu, CV_8U, 0.5, 128);
-        subtract(visu, tmp, visu);
+        subtract(visu, background, visu);
 
         ConcentrationMap(visu, cameraFrame);
 
