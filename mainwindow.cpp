@@ -573,6 +573,9 @@ void MainWindow::Go(){
                 timer->stop();
                 QMessageBox errorBox;
                 errorBox.setText("No fish detected! Change parameters!");
+                binary ->setChecked(1);
+                binary ->isChecked();
+                emit grabFrame(visu, cameraFrame);
                 errorBox.exec();
 
             }
@@ -671,6 +674,9 @@ void MainWindow::Go(){
         pause = false;
         QMessageBox pathError;
         pathError.setText("Too many objects in the image that indicated in parameters, try to increase the number of objects or to increase the minimal area of an object.");
+        binary ->setChecked(1);
+        binary ->isChecked();
+        emit grabFrame(visu, cameraFrame);
         pathError.exec();
     }
 
