@@ -242,7 +242,7 @@ MainWindow::MainWindow(QWidget *parent) :
     x2ROI = new QLabel(this);
     x2ROI->setText("Bottom corner x position for the ROI:");
     x2ROI->adjustSize();
-    x2ROI->setToolTip(tr("Horizontale position of the bottom left corner of the region of interest."));
+    x2ROI->setToolTip(tr("Horizontale position of the bottom left corner of the region of interest. Set to 0 for autoset."));
 
 
     x2ROIField = new QLineEdit(this);
@@ -264,7 +264,7 @@ MainWindow::MainWindow(QWidget *parent) :
     y2ROI = new QLabel(this);
     y2ROI->setText("Bottom corner y position for the ROI:");
     y2ROI->adjustSize();
-    y2ROI->setToolTip(tr("Verticale position of the bottom left corner of the region of interest."));
+    y2ROI->setToolTip(tr("Verticale position of the bottom left corner of the region of interest. Set to 0 for autoset."));
 
 
 
@@ -497,6 +497,8 @@ void MainWindow::Go(){
 
             try{
                 glob(folder, files, false);
+                checkPath(pathField->text());
+                UpdateParameters();
             }
             catch (...){
                 timer->stop();
@@ -517,6 +519,7 @@ void MainWindow::Go(){
             memory = tmp;
             colorMap = Color(NUMBER);
             savePath = saveField->text().toStdString();
+            
 
 
 
@@ -886,6 +889,14 @@ void MainWindow::checkPath(QString path){
         glob(folder, files, false);
         Mat img = imread(files.at(0), IMREAD_GRAYSCALE);
         pathField->setStyleSheet("background-color: green;");
+
+        if(x2ROIField->text().toInt() == 0){ // Default set of the ROI width
+            x2ROIField ->setText(QString::number(img.cols));
+        }
+
+        if(y2ROIField->text().toInt() == 0){ // Defaut set of the ROI height
+            y2ROIField ->setText(QString::number(img.rows));
+        }
 
     }
     catch(...){ // No image in the given path
