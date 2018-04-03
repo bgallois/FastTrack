@@ -40,6 +40,9 @@ HEADERS += \
         functions.h \
         Hungarian.h
 
+
 FORMS += \
         mainwindow.ui
+
+RESOURCES += resources.qrc
 

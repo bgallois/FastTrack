@@ -19,14 +19,29 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
+    // Setup the ui
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
 
+    // Setup style
+    QFile stylesheet(":/darkTheme.qss");
+
+    if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) { // Read the theme file
+        qApp->setStyleSheet(stylesheet.readAll());
+        stylesheet.close();
+    }
+
+    else{ // If the theme is not found print an error (for dev purpose)
+        cout << "Theme not found" << '\n';
+    }
+
 
     // Welcome message
     welcomeBox = new QMessageBox;
-    welcomeBox ->setText("Check new version at https://bgallois.github.io/FishyTracking/.\n © Benjamin GALLOIS benjamin.gallois@upmc.fr. \n Subscribe to the mailing list to be kept informed of new releases and new features: http://benjamin-gallois.fr/fishyTracking.html");
+    welcomeBox ->setText("Check new versions at https://bgallois.github.io/FishyTracking/.\n © Benjamin GALLOIS benjamin.gallois@upmc.fr. \n Subscribe to the mailing list to be kept informed of new releases and new features: http://benjamin-gallois.fr/fishyTracking.html");
+
 
     // Default parameters reading
     QStringList defParameters;
@@ -36,10 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
             return;
 
-
         QTextStream in(&file);
 
-        while(!in.atEnd()) {
+        while(!in.atEnd()) { // Create parameters file
             QString line = in.readLine();
             defParameters.append(line);
         }
@@ -55,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
             i++;
         }
     }
+
 
     // Widgets layout
 
@@ -103,6 +118,7 @@ MainWindow::MainWindow(QWidget *parent) :
     pathField = new QLineEdit(this);
     pathField->setText(defParameters.at(0));
     pathField->adjustSize();
+    QObject::connect(pathField, SIGNAL(textChanged(QString)), this, SLOT(checkPath(QString)));
 
 
     numLabel = new QLabel(this);
@@ -208,8 +224,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     saveField = new QLineEdit(this);
     saveField->setText(defParameters.at(10));
-
-    QObject::connect(pathField, SIGNAL(textChanged(QString)), saveField, SLOT(setText(QString)));
+    QObject::connect(pathField, SIGNAL(textChanged(QString)), this, SLOT(setSavePath(QString)));
 
 
     x1ROI = new QLabel(this);
@@ -303,9 +318,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
-
-
     display2 = new QLabel(this);
     display2->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
@@ -375,20 +387,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     central = new QWidget(this);
+    central->setObjectName("central");
     central->setLayout(layout);
     setCentralWidget(central);
 
 
 
 
-    im = 0;
-    timer = new QTimer(this);
+    // Initialization
+
+    im = 0; // Internal counter
+    timer = new QTimer(this); // Tracking timer
     timer ->setInterval(1);
     connect(timer, SIGNAL(timeout()), this, SLOT(Go())); // Tracking
     connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
 
-    imr = 0;
-    timerReplay = new QTimer(this);
+    imr = 0; // Internal counter for the replay
+    timerReplay = new QTimer(this); 
     connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
 
 
@@ -396,21 +411,31 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
+
+/**
+    * @PlayPause: custom play/pause button that allow to stop restart the tracking, also in case of error.
+*/
 void MainWindow::PlayPause(){
-    if (pause){
+    if (pause){ // Pause button pressed
         PauseButton ->setText("Play");
         timer ->stop();
         pause = false;
     }
 
-    else if (pause == false){
+    else if (pause == false){ // Play button pressed
         PauseButton ->setText("Pause");
+        x2ROIField->setStyleSheet("background-color: black;");
+        y2ROIField->setStyleSheet("background-color: black;");
         timer ->start();
         pause = true;
     }
 }
 
 
+
+/**
+    * @UpdateParameters: take the parameters from fields, cast them to right type.
+*/
 void MainWindow::UpdateParameters(){
 
     spot = trackingSpot->currentIndex();
@@ -429,6 +454,10 @@ void MainWindow::UpdateParameters(){
 
 }
 
+
+/**
+    * @Go: Main function for the tracking, take one image and track the object inside.
+*/
 void MainWindow::Go(){
 
         try{
@@ -483,6 +512,7 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
+            background.convertTo(background, CV_8U, 0.5, 0);
             //double concentration = Concentration(files);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
@@ -509,10 +539,8 @@ void MainWindow::Go(){
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
-        Mat tmp;
-        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
         visu.convertTo(visu, CV_8U, 0.5, 128);
-        subtract(visu, tmp, visu);
+        subtract(visu, background, visu);
 
         ConcentrationMap(visu, cameraFrame);
 
@@ -617,22 +645,23 @@ void MainWindow::Go(){
            trackingSpotLabel->hide();
            im = 0;
            QMessageBox msgBox;
-           msgBox.setText("The tracking is done, go to work now!!! \n You can replay the tracking by clicking the replay button.");
+           msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
            msgBox.exec();
        }
     }
 
-    catch (const Exception &exc){
+    catch (const Exception &exc){ // Out of image error
         timer->stop();
         PauseButton ->setText("Play");
         pause = false;
         QMessageBox pathError;
         pathError.setText("The ROI does not fit the image size or there is no object in the image. Please try changing the ROI and the minimal area of the object.");
+        x2ROIField->setStyleSheet("background-color: red;");
+        y2ROIField->setStyleSheet("background-color: red;");
         pathError.exec();
     }
 
-    catch(const std::out_of_range& oor)
-    {
+    catch(const std::out_of_range& oor){ // Out of range error
         timer->stop();
         PauseButton ->setText("Play");
         pause = false;
@@ -642,7 +671,7 @@ void MainWindow::Go(){
     }
 
 
-    catch (const exception &exc){
+    catch (const exception &exc){ // Unknown error
         timer->stop();
         PauseButton ->setText("Play");
         pause = false;
@@ -654,6 +683,12 @@ void MainWindow::Go(){
 }
 
 
+
+/**
+    * @Display: display the originla image and/or the binary image in two Qlabels.
+    * @param Mat visu: original image.
+    * @param UMat cameraFrame: binary image.
+*/
 void MainWindow::Display(Mat visu, UMat cameraFrame){
 
 
@@ -673,7 +708,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
         display2->clear();
     }
 
-    else if (!normal->isChecked() && binary->isChecked()){
+    else if (!normal->isChecked() && binary->isChecked()){ //Display just the binary mask
         Size size = cameraFrame.size();
         int w = display->width();
         int h = display->height();
@@ -695,13 +730,10 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
 }
 
 
-
-
-
-
-
-
-
+/**
+    * @Replay: replay the tracking.
+    * @To do: update with the new display.
+*/
 void MainWindow::Replay(){
 
     // Get parameters
@@ -792,14 +824,6 @@ void MainWindow::Replay(){
    display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
    display2->clear();
 
-
-
-
-
-
-
-
-
     if(imr < files.size() - 1){
         a ++;
         imr ++;
@@ -814,6 +838,9 @@ void MainWindow::Replay(){
 }
 
 
+/**
+    * @Write: write a text file with the parameters when clicking on "set as default" button.
+*/
 void MainWindow::Write(){
 
     QString filename = "conf.txt";
@@ -841,12 +868,42 @@ void MainWindow::Write(){
 
 
 
+/**
+    * @Reset: reset the program.
+*/
 void MainWindow::Reset()
 {
     qDebug() << "Performing application reboot...";
     qApp->exit(MainWindow::EXIT_CODE_REBOOT );
 }
 
+
+void MainWindow::checkPath(QString path){
+    string folder = path.toStdString();
+    vector<String> files;
+    try{ // Found images in the given path
+        glob(folder, files, false);
+        Mat img = imread(files.at(0), IMREAD_GRAYSCALE);
+        pathField->setStyleSheet("background-color: green;");
+
+    }
+    catch(...){ // No image in the given path
+        pathField->setStyleSheet("background-color: red;");
+    }
+
+
+}
+
+
+/**
+    * @setSavePath: auto-writting the output txt file in path_of_images/tracking.txt
+*/
+void MainWindow::setSavePath(QString path){
+    string folder = path.toStdString();
+    size_t found = folder.find("/*");
+    string savePath = folder.substr (0,found) + "/tracking.txt";
+    saveField->setText(QString::fromStdString(savePath));
+}
 
 
 MainWindow::~MainWindow()
