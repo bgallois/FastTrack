@@ -565,6 +565,8 @@ void MainWindow::Go(){
 
 
         // Visualization & saving
+       normalize(visu, visu, 0, 255, NORM_MINMAX);
+       applyColorMap(visu, visu, COLORMAP_JET);
        for(unsigned int l = 0; l < out.at(0).size(); l++){
             Point3f coord;
             coord = out.at(spot).at(l);
@@ -654,8 +656,6 @@ void MainWindow::Go(){
 
 void MainWindow::Display(Mat visu, UMat cameraFrame){
 
-    normalize(visu, visu, 0, 255, NORM_MINMAX);
-    applyColorMap(visu, visu, COLORMAP_JET);
 
     if (!normal->isChecked() && !binary->isChecked()){
         display->clear();

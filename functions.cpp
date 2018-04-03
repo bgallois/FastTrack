@@ -344,24 +344,19 @@ void Registration(UMat imageReference, UMat frame){
  * @return
  */
 string Metadata(string name){
+
+
     string line;
-    string buffer[2];
     ifstream file(name);
 
-    const size_t size = 2;
-    size_t i = 0;
-
-
-    while(getline(file, line)){
-        buffer[i] = line;
-        if (++i >= size){
-                 i = 0;
-              }
-
+    while(file){
+            getline(file, line);
     }
-    size_t found = buffer[0].find(":");
 
-    return buffer[0].substr(found+1);
+
+    size_t found = line.find(":");
+
+    return line.substr(found+1);
 
 }
 
@@ -521,6 +516,8 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 catch(...){
                     concentration = NAN;
                 }
+
+
 
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
                 positionTail.push_back(Point3f(xTail, yTail, angleTail));

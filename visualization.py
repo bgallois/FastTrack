@@ -6,8 +6,10 @@ import glob
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from bokeh.plotting import figure, show, output_file
+from bokeh.io import export_png
 from bokeh.models import ColumnDataSource, LinearColorMapper
 from bokeh.models import LogColorMapper, LogTicker, ColorBar
+from bokeh.io import export_png
 #import seaborn as sns
 
 
@@ -19,11 +21,18 @@ class Trajectory:
 
 
     def __init__(self, path):
-        self.data = pd.read_csv(path + 'tracking.txt', sep="  ", engine='python',na_values=[' nan'])
-        self.Milestones = pd.read_csv(path + 'Milestones.txt', sep='\t', engine='python', header=None)
+        self.path = path
+        self.data = pd.read_csv(path + '/tracking.txt', sep="  ", engine='python',na_values=[' nan'])
+        self.Milestones = pd.read_csv(path + '/Milestones.txt', sep='\t', engine='python', header=None)
         self.data = self.data.dropna() # Only with one fish
         self.nmax = self.objectNumber()
         self.index, self.shiftIndex = self.indexing()
+
+        for n, time in zip(self.Milestones[0], self.Milestones[1]):
+            self.data[' imageNumber'][n] = time
+        self.data[' imageNumber']=  self.data[' imageNumber'].astype('float64')
+
+            
 
 
 
@@ -183,7 +192,7 @@ class Trajectory:
         
         TOOLS="hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,reset,tap,save,box_select,poly_select,lasso_select,"
         p = figure(tools=TOOLS, x_axis_label = "x position", y_axis_label = "Time (min)")
-        colorMapper = LinearColorMapper(palette='Plasma256', low=np.percentile(c, 1), high=np.percentile(c, 99))
+        colorMapper = LinearColorMapper(palette='Plasma256', low=np.percentile(c, 1), high=1)
         colorBar = ColorBar(color_mapper=colorMapper, ticker=LogTicker(),
                      label_standoff=12, border_line_color=None, location=(0,0), title="Concentration")
         p.add_layout(colorBar, 'right')
@@ -191,11 +200,16 @@ class Trajectory:
         p.circle(x='x', y='y', fill_color={'field': 'z', 'transform': colorMapper}, line_color=None, source=source)
 
         for i in self.Milestones[1][:]:
-            p.line([0, 1000], [(i - refTime)*1e-9/60, (i - refTime)*1e-9/60], line_width=2, line_color='black', line_dash='dotted')
+            p.line([0, 1000], [(i - refTime)*1e-9/60, (i - refTime)*1e-9/60], line_width=2, line_color='red')
 
-        output_file("scatter.html")
 
-        show(p)
+        concentrationE = self.path.find('pc/')
+        concentrationB = self.path.find('AcideCitrique/') + len('AcideCitrique/')
+
+        output_file('plot.html')
+        export_png(p, filename='/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '-' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.png')
+
+        #show(p)
 
         return p
 
@@ -284,12 +298,20 @@ fig3.addLabels(xlabel = 'Concentration g/L', ylabel = "Normalized preference ind
 
 bp.show()'''
 
-B = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/2018-02-28/Run 1.02/')
+'''B = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/2018-03-06/Run 1.01/')
 B.concentrationPlot(0)
 
 x, _, _, t = B.getHeadPosition(0)
 c = B.getConcentration(0)
-print(np.argmax(c), np.max(c))
+print(np.argmax(c), np.max(c))'''
 
+folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
+
+for i in folder:
+    try:
+        Trajectory(i).concentrationPlot(0)
+    except:
+        print(i)
+        pass
 
 
