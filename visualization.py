@@ -2,15 +2,18 @@ import numpy as np
 import scipy.stats
 import pandas as pd
 import glob
+import os
+import shutil
 #import beautifulplot as bp
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from bokeh.plotting import figure, show, output_file
+from bokeh.plotting import figure, show, output_file, save
 from bokeh.io import export_png
 from bokeh.models import ColumnDataSource, LinearColorMapper
 from bokeh.models import LogColorMapper, LogTicker, ColorBar
 from bokeh.io import export_png
-#import seaborn as sns
+from bokeh.io import export_svgs
+import seaborn as sns
 
 
 
@@ -24,13 +27,14 @@ class Trajectory:
         self.path = path
         self.data = pd.read_csv(path + '/tracking.txt', sep="  ", engine='python',na_values=[' nan'])
         self.Milestones = pd.read_csv(path + '/Milestones.txt', sep='\t', engine='python', header=None)
-        self.data = self.data.dropna() # Only with one fish
-        self.nmax = self.objectNumber()
-        self.index, self.shiftIndex = self.indexing()
-
+        #self.data = self.data.dropna() # Only with one fish
         for n, time in zip(self.Milestones[0], self.Milestones[1]):
             self.data[' imageNumber'][n] = time
         self.data[' imageNumber']=  self.data[' imageNumber'].astype('float64')
+        self.nmax = self.objectNumber()
+        print(self.nmax)
+        self.index, self.shiftIndex = self.indexing()
+
 
             
 
@@ -187,12 +191,13 @@ class Trajectory:
         refTime = t[0]
         t -= t[0]
         t = t* (1e-9/60)
+        print(len(t))
 
-        c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c)))
+        c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c))) # Normalisation
         
         TOOLS="hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,reset,tap,save,box_select,poly_select,lasso_select,"
         p = figure(tools=TOOLS, x_axis_label = "x position", y_axis_label = "Time (min)")
-        colorMapper = LinearColorMapper(palette='Plasma256', low=np.percentile(c, 1), high=1)
+        colorMapper = LinearColorMapper(palette='Plasma256', low=0, high=1)
         colorBar = ColorBar(color_mapper=colorMapper, ticker=LogTicker(),
                      label_standoff=12, border_line_color=None, location=(0,0), title="Concentration")
         p.add_layout(colorBar, 'right')
@@ -207,11 +212,44 @@ class Trajectory:
         concentrationB = self.path.find('AcideCitrique/') + len('AcideCitrique/')
 
         output_file('plot.html')
-        export_png(p, filename='/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '-' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.png')
-
         #show(p)
+    
+
+        if os.path.exists('/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE]):
+            save(p, '/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '/' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.html')
+            export_png(p, filename='/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '/' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.png')
+            p.output_backend = "svg"
+            export_svgs(p, filename='/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '/' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.svg')     
+
+        else :
+            os.mkdir('/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE])
+            save(p, '/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '/' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.html')
+            export_png(p, filename='/home/ljp/resultatsAcideCitrique/' + self.path[concentrationB : concentrationE] + '/' + self.path[concentrationE + 3 : concentrationE + 13] + '_' + self.path[-8::] + '_curve.png')
 
         return p
+
+    
+    '''def caracteristicLength(self, FishNumber):
+
+        x, __, o, t = self.getHeadPosition(fishNumber)
+        c = self.getConcentration(fishNumber)
+        refTime = t[0]
+        t -= t[0]
+        t = t* (1e-9/60)
+
+        
+
+        for index, angle in enumerate(o):
+
+
+        c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c))) # Normalisation
+
+        for i in self.Milestones[1][:]:'''
+            
+
+
+
+    
 
 
 
@@ -315,3 +353,40 @@ for i in folder:
         pass
 
 
+
+a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/2018-03-06/Run 4.01')
+x, _, _, t = a.getHeadPosition(0)
+t -= t[0]
+t = t* (1e-9/60)
+c = a.getConcentration(0)
+c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c))) # Normalisation
+a.concentrationPlot(0)
+
+fig, ax1 = plt.subplots()
+
+ax1.plot(t[a.Milestones[0][1]:a.Milestones[0][2]], x[a.Milestones[0][1]:a.Milestones[0][2]], 'b.-')
+ax1.set_xlabel('time (min)')
+ax1.set_ylabel('x (px)', color='b')
+ax1.tick_params('y', colors='b')
+
+ax2 = ax1.twinx()
+ax2.plot(t[a.Milestones[0][1]:a.Milestones[0][2]], c[a.Milestones[0][1]:a.Milestones[0][2]], 'r.-')
+ax2.set_ylabel('Concentration', color='r')
+ax2.tick_params('y', colors='r')
+
+fig.tight_layout()
+
+fig, ax1 = plt.subplots()
+
+ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], x[a.Milestones[0][3]:a.Milestones[0][4]], 'b.-')
+ax1.set_xlabel('time (min)')
+ax1.set_ylabel('x (px)', color='b')
+ax1.tick_params('y', colors='b')
+
+ax2 = ax1.twinx()
+ax2.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], c[a.Milestones[0][3]:a.Milestones[0][4]], 'r.-')
+ax2.set_ylabel('Concentration', color='r')
+ax2.tick_params('y', colors='r')
+
+fig.tight_layout()
+plt.show()
