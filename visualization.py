@@ -3,10 +3,12 @@ import scipy.stats
 import pandas as pd
 import glob
 import os
+import cv2
 import shutil
 #import beautifulplot as bp
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.patches as patches
 from bokeh.plotting import figure, show, output_file, save
 from bokeh.io import export_png
 from bokeh.models import ColumnDataSource, LinearColorMapper
@@ -14,6 +16,10 @@ from bokeh.models import LogColorMapper, LogTicker, ColorBar
 from bokeh.io import export_png
 from bokeh.io import export_svgs
 import seaborn as sns
+from detect_peaks import detect_peaks
+import beautifulplot as bp
+import sys
+import traceback
 
 
 
@@ -32,17 +38,11 @@ class Trajectory:
             self.data[' imageNumber'][n] = time
         self.data[' imageNumber']=  self.data[' imageNumber'].astype('float64')
         self.nmax = self.objectNumber()
-        print(self.nmax)
         self.index, self.shiftIndex = self.indexing()
+        
 
 
             
-
-
-
-
-
-
 
     def objectNumber(self):
         """
@@ -77,57 +77,111 @@ class Trajectory:
 
 
 
+
     def getHeadPosition(self, fishNumber):
+        """
+        Description: Extract the head parameters
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: x position, y position, orientation in radian, timestamp
+        :type return: array of doubles
+        """
        
         x = self.data.iloc[self.index[fishNumber], [0]].reset_index(drop=True)
         y = self.data.iloc[self.index[fishNumber], [1]].reset_index(drop=True)
         orientation = self.data.iloc[self.index[fishNumber], [2]].reset_index(drop=True)
         t = self.data.iloc[self.index[fishNumber], [10]].reset_index(drop=True)
 
-        return x['xHead'], y[' yHead'], orientation[' tHead'], t[' imageNumber']
+        return x['xHead'].values, y[' yHead'].values, orientation[' tHead'].values, t[' imageNumber'].values
+
+
 
 
     def getTailPosition(self, fishNumber):
+        """
+        Description: Extract the tail parameters
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: x position, y position, orientation in radian, timestamp
+        :type return: array of doubles
+        """
        
         x = self.data.iloc[self.index[fishNumber], [3]].reset_index(drop=True)
         y = self.data.iloc[self.index[fishNumber], [4]].reset_index(drop=True)
         orientation = self.data.iloc[self.index[fishNumber], [5]].reset_index(drop=True)
         t = self.data.iloc[self.index[fishNumber], [10]].reset_index(drop=True)
 
-        return x['xTail'], y[' yTail'], orientation[' tTail'], t[' imageNumber']
+        return x[' xTail'].values, y[' yTail'].values, orientation[' tTail'].values, t[' imageNumber'].values
+
+
 
 
     def getCenterPosition(self, fishNumber):
-       
+        """
+        Description: Extract the center of mass parameters
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: x position, y position, orientation in radian, timestamp
+        :type return: array of doubles
+        """
         x = self.data.iloc[self.index[fishNumber], [6]].reset_index(drop=True)
         y = self.data.iloc[self.index[fishNumber], [7]].reset_index(drop=True)
         orientation = self.data.iloc[self.index[fishNumber], [8]].reset_index(drop=True)
         t = self.data.iloc[self.index[fishNumber], [10]].reset_index(drop=True)
 
-        return x['xBody'], y[' yBody'], orientation[' tBody'], t[' imageNumber']
+        return x[' xBody'].values, y[' yBody'].values, orientation[' tBody'].values, t[' imageNumber'].values
+
+
+
 
     def getCurvature(self, fishNumber):
+        """
+        Description: Extract the curvature of the fish
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: curvature
+        :type return: array of doubles
+        """
 
         curv = self.data.iloc[self.index[fishNumber], [9]].reset_index(drop=True)
        
-        return curv[' curvature']
+        return curv[' curvature'].values
 
 
-    def getVelocity(self, fishNumber):
+    def getDisplacement(self, fishNumber):
 
         displacement = np.sqrt((((self.data.iloc[self.shiftIndex[fishNumber], [0]].reset_index(drop = True)) - (self.data.iloc[self.index[fishNumber], [0]].reset_index(drop = True)))**2).values + (((self.data.iloc[self.shiftIndex[fishNumber], [1]].reset_index(drop = True)) - (self.data.iloc[self.index[fishNumber], [1]].reset_index(drop = True)))**2).values)
-       
         return displacement
+
+
 
 
     def getConcentration(self, fishNumber):
 
         concentration = self.data.iloc[self.index[fishNumber], [11]].reset_index(drop=True)
+        tmp = np.isnan(concentration[' concentration'])
+        for index, conc in enumerate(tmp):
+            if conc == True:
+                count = 1
+                while(index + count < len(tmp)-1 and tmp[index + count] == True):
+                    count += 1
+
+                if index + count < len(tmp)-1:
+                    concentration[' concentration'][index] = (concentration[' concentration'][index - 1] + concentration[' concentration'][index + count])*.5
+                else: 
+                    concentration[' concentration'][index] = concentration[' concentration'][index - 1]
+
+        print("done")
+        concentration -= 128
+        concentration = self.normalization(concentration)
        
-        return concentration[' concentration']
+        return concentration[' concentration'].values
+
+
 
 
     def preferenceIndex(self, fishNumber):
+        '''Infamous method, have to be cleared'''
 
         def preferenceIndexCalc(xPosition, side):
             pref = []
@@ -168,7 +222,7 @@ class Trajectory:
             pass
 
 
-        act = self.getVelocity(fishNumber)
+        act = self.getDisplacement(fishNumber)
         activity = []
         try:
             activity.append((np.sum(act[self.Milestones[0][1] : self.Milestones[0][2]])))
@@ -185,15 +239,20 @@ class Trajectory:
 
 
     def concentrationPlot(self, fishNumber):
+        """
+        Description: Plot the a graph with the x position of the head, the time and the concentration around the head by the color of the point?
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: figure, save also figure un html, png, svg in a folder
+        :type return: bokeh figure
+        """
 
         x, __, __, t = self.getHeadPosition(fishNumber)
         c = self.getConcentration(fishNumber)
         refTime = t[0]
         t -= t[0]
         t = t* (1e-9/60)
-        print(len(t))
 
-        c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c))) # Normalisation
         
         TOOLS="hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,reset,tap,save,box_select,poly_select,lasso_select,"
         p = figure(tools=TOOLS, x_axis_label = "x position", y_axis_label = "Time (min)")
@@ -228,6 +287,99 @@ class Trajectory:
 
         return p
 
+
+
+
+    def normalization(self, array):
+        """
+        Description: Normalizarion function with a saturation for negative values.
+
+        :array: array of doubles to normalize
+        :return: normalized array
+        :type return: array of doubles
+        """
+        array *= (array < 0)
+        array = abs(1-(array - np.min(array))/(np.max(array) - np.min(array)))
+        
+        return array
+
+
+
+
+    def extractBoutsbyCurv(self, fishNumber):
+        """
+        Description: Extract the swim bouts of the fish.
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: swim bouts
+        :type return: array of doubles
+        """
+        x, y, o, t = self.getHeadPosition(fishNumber)
+        t = t* (1e-9)
+        v = self.getDisplacement(fishNumber)[0:-1,0]
+        v = v / np.diff(t)
+        peakind = detect_peaks(v, mph=100, mpd=0.5)
+
+        return peakind
+
+
+    def timeInsideProduct(self, fishNumber):
+
+        x, y, o, t = self.getHeadPosition(fishNumber)
+        t -= t[0]
+        t = t* (1e-9)
+        c = self.getConcentration(fishNumber)
+        cThresh = c * (c > .25)
+
+        #fig, ax1 = plt.subplots()
+        timeInside = 0
+        it = 0
+
+        while(it < len(c)-1):
+            
+            if cThresh[it] != 0.:
+                count = 1
+                
+                while(cThresh[it + count] > 0.):
+                    count += 1
+
+                    if(it + count > len(cThresh)-1):
+                        count -= 1
+                        break
+
+                
+                timeInside += t[it + count] - t[it]
+                #ax1.add_patch(patches.Rectangle((t[it], 0), t[it + count] - t[it], 1000, alpha=0.3, color='y'))
+                it += count
+                
+
+            else:
+                it += 1
+                
+        '''ax1.plot(t, x, '.-')
+        ax1.set_xlabel('time (s)')
+        ax1.set_ylabel('x (px)')
+        ax1.axhline(500, 0, len(t), color='k')
+
+        ax2 = ax1.twinx()
+        ax2.plot(t, c, 'r.-')
+        ax2.set_ylabel('Concentration', color='r')
+        ax2.tick_params('y', colors='r')
+
+        fig.tight_layout()'''
+
+        return (timeInside/(t[-1]-t[0]))*100
+
+
+
+
+
+        
+
+
+        
+
+
     
     '''def caracteristicLength(self, FishNumber):
 
@@ -235,7 +387,7 @@ class Trajectory:
         c = self.getConcentration(fishNumber)
         refTime = t[0]
         t -= t[0]
-        t = t* (1e-9/60)
+        t = t* (1e-9/60)boots
 
         
 
@@ -268,7 +420,7 @@ for i in folder:
     try:
         A = Trajectory(i + '/')
         a, nI, I = A.preferenceIndex(0)
-        v = A.getVelocity(0)
+        v = A.getDisplacement(0)
         leftControl.append(I[0])
         left.append(I[1])
         rightControl.append(I[2])
@@ -302,7 +454,7 @@ ax1.set_title('Normalized preference index')'''
 
 
 
-'''label = ['0.01', '0.02', '0.03', '0.06', '0.1']
+label = ['0.01', '0.02', '0.03', '0.06', '0.1']
 folder = []
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/*/*'))
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.02pc/*/*'))
@@ -315,21 +467,29 @@ pool = []
 for i in folder:
     tmp = []
     for j in i:
-        try:
-            B = Trajectory(j + '/')
-            I, nI, a = B.preferenceIndex(0)
-            tmp.append(nI[0])
-            tmp.append(nI[1])
+            print(j)
+        #try:
+            B = Trajectory(j)
+            d = B.timeInsideProduct(0)
+            tmp.append(d)
 
-        except:
-            pass
+            #except BaseException as e:
+            #print(j)
+            #pass
     pool.append(tmp)
 
+fig = bp.BoxPlot()
+fig.plot(pool, label = label)
+fig.addN()
+fig.limits(ylim = [0, 50])
+fig.plotPoints()
+fig.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")
 
 
-fig3 = bp.BoxPlot()
-fig3.plot(pool, label = label)
-fig3.addN(size = 12)
+
+'''fig3 = bp.BoxPlot()
+fig3.plot(pool, label = label)'''
+'''fig3.addN(size = 12)
 fig3.limits(ylim = [-1, 1])
 fig3.plotPoints()
 fig3.addLabels(xlabel = 'Concentration g/L', ylabel = "Normalized preference index")
@@ -343,50 +503,100 @@ x, _, _, t = B.getHeadPosition(0)
 c = B.getConcentration(0)
 print(np.argmax(c), np.max(c))'''
 
-folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
+'''folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
 
 for i in folder:
     try:
         Trajectory(i).concentrationPlot(0)
     except:
         print(i)
-        pass
+        pass'''
 
 
 
-a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/2018-03-06/Run 4.01')
-x, _, _, t = a.getHeadPosition(0)
+'''a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/2018-03-07/Run 4.03')
+x, y, o, t = a.getTailPosition(0)
+xh, yh, oh, th = a.getHeadPosition(0)
 t -= t[0]
-t = t* (1e-9/60)
+o = np.unwrap(o) #To check
+t = t* (1e-9)
 c = a.getConcentration(0)
-c = abs(1-(c - np.min(c))/(np.max(c) - np.min(c))) # Normalisation
 a.concentrationPlot(0)
+r = a.getDisplacement(0)
+c *= (c > 0.15)
+changementOrient = np.diff(o)
+changementOrient = (changementOrient + 180) % 360 - 180
+curv = a.getCurvature(0)
+bo = a.extractBoutsbyCurv(0)
+l = a.getDisplacement(0)
+d = a.timeInsideProduct(0)'''
 
-fig, ax1 = plt.subplots()
+
+
+'''inside = []
+outside = []
+
+for i, j in enumerate(c):
+    for k in bo:
+        if j != 0 and i == k:
+            outside.append()
+        if j == 0 and i == k:
+            inside.append()
+
+sns.distplot(outside, label='Buffer');
+sns.distplot(inside, label='Acide');
+plt.legend()'''
+
+'''fig, ax1 = plt.subplots()
 
 ax1.plot(t[a.Milestones[0][1]:a.Milestones[0][2]], x[a.Milestones[0][1]:a.Milestones[0][2]], 'b.-')
 ax1.set_xlabel('time (min)')
 ax1.set_ylabel('x (px)', color='b')
 ax1.tick_params('y', colors='b')
+ax1.plot(t[a.Milestones[0][1]:a.Milestones[0][2]], o[a.Milestones[0][1]:a.Milestones[0][2]]*(1000/6.), 'g.-')
 
 ax2 = ax1.twinx()
 ax2.plot(t[a.Milestones[0][1]:a.Milestones[0][2]], c[a.Milestones[0][1]:a.Milestones[0][2]], 'r.-')
 ax2.set_ylabel('Concentration', color='r')
 ax2.tick_params('y', colors='r')
 
-fig.tight_layout()
+fig.tight_layout()'''
 
-fig, ax1 = plt.subplots()
 
-ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], x[a.Milestones[0][3]:a.Milestones[0][4]], 'b.-')
-ax1.set_xlabel('time (min)')
+
+'''fig, ax1 = plt.subplots()
+
+ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], xh[a.Milestones[0][3]:a.Milestones[0][4]], 'b.-')
+#ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], xh[a.Milestones[0][3]:a.Milestones[0][4]], 'r.-')
+ax1.plot(t[bo], xh[bo], 'ro')
+
+#ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], y[a.Milestones[0][3]:a.Milestones[0][4]] +1000, 'b.-')
+#ax1.plot(t[bo], y[bo]+1000, 'ro')
+
+#ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], curv[a.Milestones[0][3]:a.Milestones[0][4]], 'b.-')
+ax1.set_xlabel('time (s)')
 ax1.set_ylabel('x (px)', color='b')
-ax1.tick_params('y', colors='b')
+ax1.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], o[a.Milestones[0][3]:a.Milestones[0][4]]*(1000/6.), 'g.-')
 
 ax2 = ax1.twinx()
+#ax2.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], v[a.Milestones[0][3]:a.Milestones[0][4]], 'r.-')
 ax2.plot(t[a.Milestones[0][3]:a.Milestones[0][4]], c[a.Milestones[0][3]:a.Milestones[0][4]], 'r.-')
 ax2.set_ylabel('Concentration', color='r')
+ax2.plot(t[bo], c[bo], 'bo')
 ax2.tick_params('y', colors='r')
 
 fig.tight_layout()
+
+path = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/2018-03-06/Run 4.01/*pgm')
+path.sort()
+for i, j in enumerate(path):
+    frame = cv2.imread(j)
+    for k in bo:
+        if i == k:
+            cv2.circle(frame, (int(x[i]), int(y[i])), 5, (0,0,255), -1)
+    cv2.imshow('frame', frame)
+    if cv2.waitKey(250) & 0xFF == ord('q'):
+            break'''
+
+
 plt.show()
