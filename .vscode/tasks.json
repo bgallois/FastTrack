@@ -1,0 +1,17 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "echo",
+            "type": "shell",
+            "command": "qmake Fishy.pro -spec linux-g++ CON CONFIG+=qml_debug && /usr/bin/make qmake_all Fishy.pro; make; rm Makefile; rm -R ../Fishy_build/.ui; rm -R ../Fishy_build/.qrc; rm -R ../Fishy_build/.obj; rm -R ../Fishy_build/.moc; ../Fishy_build/./Fishy",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+
+            }
+        }
+    ]
+}

@@ -444,9 +444,8 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
 
 
-                Point center = Point(0.5*RoiFull.cols, 0.5*RoiFull.rows);
-                rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);
-                rotate;
+				Point center = Point(0.5*RoiFull.cols, 0.5*RoiFull.rows);
+                rotMatrix = getRotationMatrix2D(center, -(parameter.at(2)*180)/M_PI, 1);              
                 bbox = RotatedRect(center, RoiFull.size(), -(parameter.at(2)*180)/M_PI).boundingRect();
                 rotMatrix.at<double>(0,2) += bbox.width*0.5 - center.x; //add an off set
                 rotMatrix.at<double>(1,2) += bbox.height*0.5 - center.y;// to rotate without cropping the frame
