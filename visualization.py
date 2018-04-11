@@ -20,6 +20,7 @@ from detect_peaks import detect_peaks
 import beautifulplot as bp
 import sys
 import traceback
+plt.style.use('seaborn-colorblind')
 
 
 
@@ -329,10 +330,30 @@ class Trajectory:
         t -= t[0]
         t = t* (1e-9)
         c = self.getConcentration(fishNumber)
-        cThresh = c * (c > .25)
+        cThresh = c * (c > .35)
 
-        #fig, ax1 = plt.subplots()
+        for index, conc in enumerate(cThresh):
+            if (index < self.Milestones[0][3]) and (x[index] < 250 or x[index] > 750) and conc != 0:
+                cThresh[index] = 0
+
+            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] > 750 and conc != 0:
+                cThresh[index] = 0
+            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] < 250 and conc == 0:
+                cThresh[index] = cThresh[index - 1]
+
+            elif (index < self.Milestones[0][7]) and index > self.Milestones[0][5] and (x[index] < 250 or x[index] > 750) and conc != 0:
+                cThresh[index] = 0
+
+            elif (index < self.Milestones[0][7]) and x[index] > 750 and conc == 0:
+                cThresh[index] = 0
+            elif (index < self.Milestones[0][7]) and x[index] < 250 and conc != 0:
+                cThresh[index] = cThresh[index - 1]
+
+
+
+        fig, ax1 = plt.subplots()
         timeInside = 0
+        deltatime = []
         it = 0
 
         while(it < len(c)-1):
@@ -349,14 +370,16 @@ class Trajectory:
 
                 
                 timeInside += t[it + count] - t[it]
-                #ax1.add_patch(patches.Rectangle((t[it], 0), t[it + count] - t[it], 1000, alpha=0.3, color='y'))
+                deltatime.append(t[it + count] - t[it])
+                ax1.add_patch(patches.Rectangle((t[it], 0), t[it + count] - t[it], 1000, alpha=0.3, color='y'))
                 it += count
                 
 
             else:
                 it += 1
                 
-        '''ax1.plot(t, x, '.-')
+        ax1.plot(t, x, '.-')
+        ax1.plot(t, y, '.-')
         ax1.set_xlabel('time (s)')
         ax1.set_ylabel('x (px)')
         ax1.axhline(500, 0, len(t), color='k')
@@ -366,9 +389,11 @@ class Trajectory:
         ax2.set_ylabel('Concentration', color='r')
         ax2.tick_params('y', colors='r')
 
-        fig.tight_layout()'''
+        fig.tight_layout()
 
-        return (timeInside/(t[-1]-t[0]))*100
+        
+
+        return (timeInside/(t[-1]-t[0]))*100, deltatime
 
 
 
@@ -463,20 +488,28 @@ folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/*/*'))
 
 pool = []
+dist = []
 
 for i in folder:
     tmp = []
+    tmpMat = []
     for j in i:
-            print(j)
-        #try:
+        try:
             B = Trajectory(j)
-            d = B.timeInsideProduct(0)
+            d, c = B.timeInsideProduct(0)
             tmp.append(d)
+            for cc in c:
+                tmpMat.append(cc)
 
-            #except BaseException as e:
-            #print(j)
-            #pass
+
+        except BaseException as e:
+            print(j)
+            pass
+
     pool.append(tmp)
+    dist.append(tmpMat)
+
+    
 
 fig = bp.BoxPlot()
 fig.plot(pool, label = label)
@@ -484,6 +517,12 @@ fig.addN()
 fig.limits(ylim = [0, 50])
 fig.plotPoints()
 fig.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")
+
+fig2 = bp.BoxPlot()
+fig2.plot(dist, label = label)
+fig2.addN()
+fig2.plotPoints()
+fig2.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")
 
 
 
