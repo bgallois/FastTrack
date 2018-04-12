@@ -88,4 +88,7 @@ vector<Point3f> Color(int number);
 
 Rect AutoROI(UMat background);
 
+
+void FillMargin(Mat visu);
+
 #endif

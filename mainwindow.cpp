@@ -555,8 +555,7 @@ void MainWindow::Go(){
 
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
-
-        imshow("coucou", cameraFrame);
+        FillMargin(visu);
 
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);

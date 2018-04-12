@@ -739,6 +739,57 @@ Rect AutoROI(UMat background){
 
 
 
+/**
+  * @FillMargin fills the border of the image with the nearest pixel inside the ROI
+  * @param Mat: frame
+
+
+*/
+void FillMargin(Mat frame){
+
+    Rect innerROI(20, 20 , frame.cols - 40, frame.rows - 40);
+
+    for(int row = 0; row < frame.rows; row++){
+        for(int col = 0; col < frame.cols; col++){
+            if ( col < innerROI.x ){ // Left side
+                frame.at<uchar>(row, col) = frame.at<uchar>(row, innerROI.x);
+            }
+
+            if ( col > innerROI.x + innerROI.width){ // Right side
+                frame.at<uchar>(row, col) = frame.at<uchar>(row, innerROI.x + innerROI.width);
+            }
+
+            if ( row < innerROI.y ){ // Top side
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y, col);
+            }
+
+            if ( row > innerROI.y + innerROI.height ){ // Bottom side
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y + innerROI.height, col);
+            }
+
+            if ( (col < innerROI.x) && (row < innerROI.y) ){ // Top left corner
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y, innerROI.x);
+            }
+
+            if ( (col > innerROI.x + innerROI.width) && (row < innerROI.y) ){ // Top right corner
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y + innerROI.height, innerROI.x);
+            }
+
+            if ( (col > innerROI.x + innerROI.width) && (row > innerROI.y + innerROI.height) ){ // Bottom right corner
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y + innerROI.height, innerROI.x + innerROI.width);
+            }
+
+            if ( (col < innerROI.x ) && (row > innerROI.y + innerROI.height) ){ // Bottom leftcorner
+                frame.at<uchar>(row, col) = frame.at<uchar>(innerROI.y + innerROI.height, innerROI.x);
+            }
+        }
+    }
+    GaussianBlur(frame, frame, Size(5, 5), 0, 0);
+    
+}
+
+
+
 
 
 
