@@ -85,4 +85,7 @@ vector<Point3f> Prevision(vector<Point3f> past, vector<Point3f> present);
 
 vector<Point3f> Color(int number);
 
+
+Rect AutoROI(UMat background);
+
 #endif

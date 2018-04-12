@@ -140,6 +140,7 @@ private:
     int threshValue;
     string savePath;
     bool pause;
+    Rect ROI;
 
 public slots:
     void Go();

@@ -483,6 +483,8 @@ void MainWindow::Go(){
         numField->setDisabled(true);
         nBackField->setDisabled(true);
         saveField->setDisabled(true);
+        
+        
 
 
 
@@ -519,6 +521,9 @@ void MainWindow::Go(){
             memory = tmp;
             colorMap = Color(NUMBER);
             savePath = saveField->text().toStdString();
+
+            ROI = AutoROI(background);
+            
             
 
 
@@ -528,11 +533,11 @@ void MainWindow::Go(){
             }
         }
 
-
+        
         string name = *a;
         savefile.open(savePath);
 
-        Rect ROI(x1, y1, x2 - x1, y2 - y1);
+        //Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
         string metadata = Metadata(name);
 
@@ -551,7 +556,7 @@ void MainWindow::Go(){
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
 
-
+        imshow("coucou", cameraFrame);
 
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);

@@ -683,6 +683,63 @@ vector<Point3f> Color(int number){
 
 
 
+/**
+  * @AutoROI computes automatically a rectangular ROI
+  * @param UMat: background
+
+  * @return Rect: ROI
+*/
+Rect AutoROI(UMat background){
+    Mat back;
+    Mat backEroded;
+    GaussianBlur(background, back, Size(25, 25), 0, 0);
+
+    for(int row = 0; row < back.rows; row++){
+        for(int col = 0; col < back.cols; col++){
+            if(col == 1000 || row ==500 || col == 0 || row ==0){
+                    back.at<uchar>(row, col) = 0;
+                }
+        }
+    }
+
+    int dilatationSize = 5;
+    Mat element = getStructuringElement(MORPH_RECT, Size(35, 35), Point(-1, -1));
+    erode(back, backEroded, element);
+    threshold(backEroded, backEroded, 0, 255, THRESH_OTSU);
+
+    
+    
+
+    int minRow = 100000;
+    int minCol = 100000;
+    int maxRow = 0;
+    int maxCol = 0;
+    for(int row = 0; row < backEroded.rows; row++){
+        for(int col = 0; col < backEroded.cols; col++){
+            if(backEroded.at<uchar>(row, col) == 255){
+                if(minRow > row){
+                    minRow = row;
+                }
+                if(maxRow < row){
+                    maxRow = row;
+                }
+                if(minCol > col){
+                    minCol = col;
+                }
+                if(maxCol < col){
+                    maxCol = col;
+                }
+            }
+        }
+    }
+    Rect ROI(minCol, minRow, maxCol - minCol, maxRow - minRow);
+
+    return ROI;
+}
+
+
+
+
 
 
 
