@@ -393,7 +393,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
     // Initialization
 
     im = 0; // Internal counter
@@ -403,10 +402,28 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
 
     imr = 0; // Internal counter for the replay
-    timerReplay = new QTimer(this); 
+    timerReplay = new QTimer(this);
     connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
 
+    size_t found = pathField->text().toStdString().find(".txt");
 
+
+    if (found != string::npos){// Multiple path
+        string line;
+        ifstream pathFile (pathField->text().toStdString());
+        if ( pathFile.is_open()){
+            while ( getline (pathFile,line) ){
+            pathList.push_back(line);
+            }
+        pathFile.close();
+        }
+    }
+    else{
+        pathList.push_back(pathField->text().toStdString());
+    }
+
+    folder = pathList.at(0);
+    // pathField ->setText(QString::fromStdString(folder));
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
 }
@@ -430,6 +447,10 @@ void MainWindow::PlayPause(){
         pause = true;
     }
 }
+
+
+
+
 
 
 
@@ -493,7 +514,8 @@ void MainWindow::Go(){
 
             timer->start();
             UpdateParameters();
-            string folder = pathField->text().toStdString();
+            pathField ->setText(QString::fromStdString(folder));
+            //string folder = pathField->text().toStdString();
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
 
@@ -646,7 +668,11 @@ void MainWindow::Go(){
         }
 
        else{
-           timer->stop();
+            pathListCount++;
+            folder = pathList.at(pathListCount);
+            pathField ->setText(QString::fromStdString(folder));
+            QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+           /*timer->stop();
            ReplayButton->show();
            PauseButton ->hide();
            fps ->show();
@@ -657,7 +683,7 @@ void MainWindow::Go(){
            im = 0;
            QMessageBox msgBox;
            msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
-           msgBox.exec();
+           msgBox.exec();*/
        }
     }
 

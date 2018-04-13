@@ -115,6 +115,7 @@ private:
     UMat background;
     Mat concentrationImg;
     vector<vector<Point> > memory;
+    vector<string> pathList;
     vector<Point3f> colorMap;
     vector<vector<Point3f> > out;
     vector<vector<Point3f> > outPrev;
@@ -141,6 +142,8 @@ private:
     string savePath;
     bool pause;
     Rect ROI;
+    string folder;
+    int pathListCount = 0;
 
 public slots:
     void Go();

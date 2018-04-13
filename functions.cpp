@@ -732,7 +732,7 @@ Rect AutoROI(UMat background){
             }
         }
     }
-    Rect ROI(minCol, minRow, maxCol - minCol, maxRow - minRow);
+    Rect ROI(minCol + 10, minRow + 10, maxCol - minCol - 20, maxRow - minRow  - 20);
 
     return ROI;
 }
