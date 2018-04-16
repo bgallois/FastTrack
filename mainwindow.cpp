@@ -421,8 +421,8 @@ MainWindow::MainWindow(QWidget *parent) :
     else{
         pathList.push_back(pathField->text().toStdString());
     }
-
-    folder = pathList.at(0);
+    pathListCount = 0;
+    folder = pathList.at(pathListCount);
     // pathField ->setText(QString::fromStdString(folder));
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
@@ -672,6 +672,7 @@ void MainWindow::Go(){
             folder = pathList.at(pathListCount);
             pathField ->setText(QString::fromStdString(folder));
             QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+            im = 0;
            /*timer->stop();
            ReplayButton->show();
            PauseButton ->hide();

@@ -143,7 +143,7 @@ private:
     bool pause;
     Rect ROI;
     string folder;
-    int pathListCount = 0;
+    int pathListCount;
 
 public slots:
     void Go();

@@ -34,7 +34,6 @@ class Trajectory:
         self.path = path
         self.data = pd.read_csv(path + '/tracking.txt', sep="  ", engine='python',na_values=[' nan'])
         self.Milestones = pd.read_csv(path + '/Milestones.txt', sep='\t', engine='python', header=None)
-        #self.data = self.data.dropna() # Only with one fish
         for n, time in zip(self.Milestones[0], self.Milestones[1]):
             self.data[' imageNumber'][n] = time
         self.data[' imageNumber']=  self.data[' imageNumber'].astype('float64')
@@ -150,6 +149,13 @@ class Trajectory:
 
 
     def getDisplacement(self, fishNumber):
+        """
+        Description: Extract the displacement of the fish
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: displacement
+        :type return: array of doubles
+        """
 
         displacement = np.sqrt((((self.data.iloc[self.shiftIndex[fishNumber], [0]].reset_index(drop = True)) - (self.data.iloc[self.index[fishNumber], [0]].reset_index(drop = True)))**2).values + (((self.data.iloc[self.shiftIndex[fishNumber], [1]].reset_index(drop = True)) - (self.data.iloc[self.index[fishNumber], [1]].reset_index(drop = True)))**2).values)
         return displacement
@@ -158,6 +164,13 @@ class Trajectory:
 
 
     def getConcentration(self, fishNumber):
+        """
+        Description: Extract the concentration
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: concentration
+        :type return: array of doubles
+        """
 
         concentration = self.data.iloc[self.index[fishNumber], [11]].reset_index(drop=True)
         tmp = np.isnan(concentration[' concentration'])
@@ -172,7 +185,6 @@ class Trajectory:
                 else: 
                     concentration[' concentration'][index] = concentration[' concentration'][index - 1]
 
-        print("done")
         concentration -= 128
         concentration = self.normalization(concentration)
        
@@ -479,7 +491,7 @@ ax1.set_title('Normalized preference index')'''
 
 
 
-label = ['0.01', '0.02', '0.03', '0.06', '0.1']
+'''label = ['0.01', '0.02', '0.03', '0.06', '0.1']
 folder = []
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/*/*'))
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.02pc/*/*'))
@@ -522,7 +534,7 @@ fig2 = bp.BoxPlot()
 fig2.plot(dist, label = label)
 fig2.addN()
 fig2.plotPoints()
-fig2.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")
+fig2.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")'''
 
 
 
@@ -542,14 +554,14 @@ x, _, _, t = B.getHeadPosition(0)
 c = B.getConcentration(0)
 print(np.argmax(c), np.max(c))'''
 
-'''folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
+folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
 
 for i in folder:
     try:
         Trajectory(i).concentrationPlot(0)
     except:
         print(i)
-        pass'''
+        pass
 
 
 
