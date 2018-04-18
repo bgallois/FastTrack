@@ -426,6 +426,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // pathField ->setText(QString::fromStdString(folder));
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
+
 }
 
 
@@ -602,7 +603,15 @@ void MainWindow::Go(){
                 binary ->setChecked(1);
                 binary ->isChecked();
                 emit grabFrame(visu, cameraFrame);
-                errorBox.exec();
+                //errorBox.exec();
+
+                ofstream log;
+                log.open("error.log", ios::out | ios::app );
+                log << name << '\n';
+                pathListCount++;
+                folder = pathList.at(pathListCount);
+                pathField ->setText(QString::fromStdString(folder));
+                im = 0;
 
             }
 
@@ -696,7 +705,15 @@ void MainWindow::Go(){
         pathError.setText("The ROI does not fit the image size or there is no object in the image. Please try changing the ROI and the minimal area of the object.");
         x2ROIField->setStyleSheet("background-color: red;");
         y2ROIField->setStyleSheet("background-color: red;");
-        pathError.exec();
+        //pathError.exec();
+
+        ofstream log;
+        log.open("error.log", ios::out | ios::app );
+        log << path << '\n';
+        pathListCount++;
+        folder = pathList.at(pathListCount);
+        pathField ->setText(QString::fromStdString(folder));
+        im = 0;
     }
 
     catch(const std::out_of_range& oor){ // Out of range error
@@ -708,7 +725,15 @@ void MainWindow::Go(){
         binary ->setChecked(1);
         binary ->isChecked();
         emit grabFrame(visu, cameraFrame);
-        pathError.exec();
+        // pathError.exec();
+
+        ofstream log;
+        log.open("error.log", ios::out | ios::app );
+        log << path << '\n';
+        pathListCount++;
+        folder = pathList.at(pathListCount);
+        pathField ->setText(QString::fromStdString(folder));
+        im = 0;
     }
 
 
@@ -718,7 +743,15 @@ void MainWindow::Go(){
         pause = false;
         QMessageBox pathError;
         pathError.setText(exc.what());
-        pathError.exec();
+        //pathError.exec();
+
+        ofstream log;
+        log.open("error.log", ios::out | ios::app );
+        log << path << '\n';
+        pathListCount++;
+        folder = pathList.at(pathListCount);
+        pathField ->setText(QString::fromStdString(folder));
+        im = 0;
     }
 
 }

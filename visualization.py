@@ -273,7 +273,7 @@ class Trajectory:
         colorBar = ColorBar(color_mapper=colorMapper, ticker=LogTicker(),
                      label_standoff=12, border_line_color=None, location=(0,0), title="Concentration")
         p.add_layout(colorBar, 'right')
-        source = ColumnDataSource(dict(x=x, y=t, z=c.values))
+        source = ColumnDataSource(dict(x=x, y=t, z=c))
         p.circle(x='x', y='y', fill_color={'field': 'z', 'transform': colorMapper}, line_color=None, source=source)
 
         for i in self.Milestones[1][:]:
@@ -557,11 +557,12 @@ print(np.argmax(c), np.max(c))'''
 folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
 
 for i in folder:
-    try:
-        Trajectory(i).concentrationPlot(0)
-    except:
+    #try:
         print(i)
-        pass
+        Trajectory(i).concentrationPlot(0)
+    #except:
+        
+        #pass
 
 
 
