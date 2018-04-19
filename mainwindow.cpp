@@ -709,11 +709,12 @@ void MainWindow::Go(){
 
         ofstream log;
         log.open("error.log", ios::out | ios::app );
-        log << path << '\n';
+        log << pathList.at(pathListCount) << '\n';
         pathListCount++;
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
         im = 0;
+        Go();
     }
 
     catch(const std::out_of_range& oor){ // Out of range error
@@ -729,11 +730,12 @@ void MainWindow::Go(){
 
         ofstream log;
         log.open("error.log", ios::out | ios::app );
-        log << path << '\n';
+        log << pathList.at(pathListCount) << '\n';
         pathListCount++;
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
         im = 0;
+        QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
     }
 
 
@@ -747,11 +749,12 @@ void MainWindow::Go(){
 
         ofstream log;
         log.open("error.log", ios::out | ios::app );
-        log << path << '\n';
+        log << pathList.at(pathListCount) << '\n';
         pathListCount++;
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
         im = 0;
+        QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
     }
 
 }

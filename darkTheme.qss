@@ -69,7 +69,7 @@ QSlider{
 }
 
 QLCDNumber{
-	background-color: black;
+    background-color: black;
     border-style: outset;
     border-width: 2px;
     border-radius: 10px;
@@ -81,7 +81,7 @@ QLCDNumber{
 }
 
 QCheckBox{
-	background-color: black;
+    background-color: black;
     border-style: outset;
     border-width: 2px;
     border-radius: 10px;
@@ -96,7 +96,7 @@ QCheckBox{
 QProgressBar {
     background-color: black;
     border: 1px solid white;
-	border-radius: 10px;
+    border-radius: 10px;
     text-align: center;
     color: white;
     border-radius: 10px;
@@ -120,16 +120,41 @@ QSlider::groove:horizontal {
 
 QSlider::handle:horizontal {
     background: white;
-    border: 10px black;
     width: 18px;
     margin: -2px 0;
     border-radius: 3px;
 }
 
 QWidget#central {
-background-color: black; 
+    background: black;
+}
+
+
+QWidget#display{
+    background-color: black;
+    border-style: outset;
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: lightgrey;
+    padding: 6px;
+}
+
+QWidget#display2{
+    background-color: black;
+    border-style: outset;
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: lightgrey;
+    padding: 6px;
 }
 
 QMessageBox{
-	background-color: black; 
+    background-color: black;
+}
+
+QStatusBar {
+    background-color: black;
+    color: white;
+
+
 }
