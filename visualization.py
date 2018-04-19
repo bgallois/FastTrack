@@ -554,7 +554,7 @@ x, _, _, t = B.getHeadPosition(0)
 c = B.getConcentration(0)
 print(np.argmax(c), np.max(c))'''
 
-folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
+'''folder = glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/*/*/*')
 
 for i in folder:
     #try:
@@ -562,11 +562,11 @@ for i in folder:
         Trajectory(i).concentrationPlot(0)
     #except:
         
-        #pass
+        #pass'''
 
 
 
-'''a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/2018-03-07/Run 4.03')
+a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.02pc/2018-03-09/Run 1.01')
 x, y, o, t = a.getTailPosition(0)
 xh, yh, oh, th = a.getHeadPosition(0)
 t -= t[0]
@@ -581,7 +581,7 @@ changementOrient = (changementOrient + 180) % 360 - 180
 curv = a.getCurvature(0)
 bo = a.extractBoutsbyCurv(0)
 l = a.getDisplacement(0)
-d = a.timeInsideProduct(0)'''
+d = a.timeInsideProduct(0)
 
 
 

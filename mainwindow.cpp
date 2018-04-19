@@ -682,8 +682,8 @@ void MainWindow::Go(){
             pathListCount++;
             folder = pathList.at(pathListCount);
             pathField ->setText(QString::fromStdString(folder));
-            QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
             im = 0;
+            Go();
            /*timer->stop();
            ReplayButton->show();
            PauseButton ->hide();
@@ -738,7 +738,8 @@ void MainWindow::Go(){
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
         im = 0;
-        QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+        Go();
+
     }
 
 
@@ -757,7 +758,7 @@ void MainWindow::Go(){
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
         im = 0;
-        QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+        Go();
     }
 
 }
@@ -784,7 +785,6 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
 
     else if (normal->isChecked() && !binary->isChecked()){
         cvtColor(visu,visu,CV_BGR2RGB);
-        Size size = visu.size();
 
         display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
