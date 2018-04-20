@@ -85,7 +85,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     GoButton = new QPushButton("Go", this);
-    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(Go()));
+    logConnection = new QMetaObject::Connection;
+    *logConnection = QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(logInit())); // Order of this two connects
+    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(Go()));      // is crutial !!! this connection will be destroy after first execution to avoid erase the output file
+    GoButton ->setToolTip(tr("Press to begin the tracking."));
 
     PauseButton = new QPushButton("Pause", this);
     pause = true;
@@ -407,6 +410,7 @@ MainWindow::MainWindow(QWidget *parent) :
     imr = 0; // Internal counter for the replay
     timerReplay = new QTimer(this);
     connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
+    QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
     size_t found = pathField->text().toStdString().find(".txt");
 
@@ -428,9 +432,21 @@ MainWindow::MainWindow(QWidget *parent) :
     folder = pathList.at(pathListCount);
     // pathField ->setText(QString::fromStdString(folder));
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
+}
 
+
+/**
+    * @logInit: open text file for output and log.
+*/
+void MainWindow::logInit(){
+    
+    savePath = saveField->text().toStdString();
+    savefile.open(savePath);
+    QObject::disconnect(*logConnection); // Delete the connection to avoid erasing the file by clicking another time on the GoButton
 
 }
+
+
 
 
 /**
@@ -522,6 +538,7 @@ void MainWindow::Go(){
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
 
+
             try{
                 glob(folder, files, false);
                 checkPath(pathField->text());
@@ -545,7 +562,6 @@ void MainWindow::Go(){
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
-            savePath = saveField->text().toStdString();
 
             ROI = AutoROI(background);
             
@@ -560,7 +576,7 @@ void MainWindow::Go(){
 
         
         string name = *a;
-        savefile.open(savePath);
+        savefile.open(savePath); // Erase previous output file if exist
 
         //Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
@@ -658,8 +674,6 @@ void MainWindow::Go(){
             coord.x += ROI.tl().x;
             coord.y += ROI.tl().y;
             internalSaving.at(im*NUMBER + l) = coord;
-            ofstream savefile;
-            savefile.open(savePath, ios::out | ios::app );
             if(im == 0 && l == 0){
                 savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << '\n';
             }

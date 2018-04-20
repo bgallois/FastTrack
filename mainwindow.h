@@ -54,7 +54,8 @@ private:
     QCheckBox *normal;
     QCheckBox *binary;
     QMessageBox *welcomeBox;
-    QString version = "v3.6.1";
+    QString version = "v3.6.3";
+    QMetaObject::Connection *logConnection;
 
     QWidget *central;
     QLayout *layout;
@@ -155,6 +156,7 @@ public slots:
     void PlayPause();
     void checkPath(QString);
     void setSavePath(QString);
+    void logInit();
 
 signals:
     void grabFrame(Mat visu, UMat cameraFrame);
