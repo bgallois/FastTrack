@@ -530,7 +530,7 @@ void MainWindow::Go(){
 
         if(im == 0){ // Initialization
 
-
+            logInit();
             timer->start();
             UpdateParameters();
             pathField ->setText(QString::fromStdString(folder));
@@ -576,7 +576,6 @@ void MainWindow::Go(){
 
         
         string name = *a;
-        savefile.open(savePath); // Erase previous output file if exist
 
         //Rect ROI(x1, y1, x2 - x1, y2 - y1);
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
@@ -696,6 +695,7 @@ void MainWindow::Go(){
             pathListCount++;
             folder = pathList.at(pathListCount);
             pathField ->setText(QString::fromStdString(folder));
+            savefile.close();
             im = 0;
             Go();
            /*timer->stop();
@@ -730,6 +730,7 @@ void MainWindow::Go(){
         pathListCount++;
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
+        savefile.close();
         im = 0;
         Go();
     }
@@ -743,6 +744,7 @@ void MainWindow::Go(){
         binary ->setChecked(1);
         binary ->isChecked();
         emit grabFrame(visu, cameraFrame);
+        savefile.close();
         // pathError.exec();
 
         ofstream log;
@@ -763,6 +765,7 @@ void MainWindow::Go(){
         pause = false;
         QMessageBox pathError;
         pathError.setText(exc.what());
+        savefile.close();
         //pathError.exec();
 
         ofstream log;
