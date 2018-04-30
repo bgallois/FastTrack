@@ -8,6 +8,8 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <string>
 #include <functions.h>
+#include <opencv2/core/ocl.hpp>
+
 
 
 
@@ -26,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("Fishy Tracking");
     statusBar()->showMessage(tr("Ready"));
 
-
+    cv::ocl::setUseOpenCL(false);
     // Setup style
     QFile stylesheet(":/darkTheme.qss");
 
