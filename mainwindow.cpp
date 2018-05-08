@@ -534,7 +534,7 @@ void MainWindow::Go(){
 
         if(im == 0){ // Initialization
 
-
+            logInit();
             timer->start();
             UpdateParameters();
             pathField ->setText(QString::fromStdString(folder));
