@@ -127,6 +127,8 @@ vector<double> Orientation(UMat image, bool dir) {
     orientation = 2*M_PI - orientation;
     double orientationDeg = (orientation*180)/M_PI;
 
+    // double majAxis = 2*pow( (((i + k) + pow( (i - k)*(i - k) + 4*j*j,0.5))*0.5) / moment.m00 ,0.5);
+    double majAxis;
 
     if(dir == true){ // Orientation computation
         //Two methods available here to compute the direction
@@ -152,6 +154,7 @@ vector<double> Orientation(UMat image, bool dir) {
             tmpMat.push_back((double)s);
         }
 
+        majAxis = (double)tmpMat.size();
         double ccMax = *max_element(tmpMat.begin(), tmpMat.end())/100;
         for (unsigned int it = 0; it < tmpMat.size(); ++it){
             int cc = tmpMat.at(it);
@@ -181,7 +184,7 @@ vector<double> Orientation(UMat image, bool dir) {
         }
     }
 
-    vector<double> param {x, y, orientation};
+    vector<double> param {x, y, orientation, majAxis};
 
     return param;
 }
@@ -424,6 +427,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
     vector<double> parameterHead;
     vector<double> parameterTail;
     Point2f radiusCurv;
+    double objectLen;
 
     findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
@@ -441,6 +445,8 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
                 parameter = Orientation(RoiFull, true); // In RoiFull coordinates: x, y, orientation
                 double angleFull = parameter.at(2);
+
+                objectLen = parameter.at(3);
 
 
 
@@ -521,7 +527,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
                 positionTail.push_back(Point3f(xTail, yTail, angleTail));
                 positionFull.push_back(Point3f(parameter.at(0) + roiFull.tl().x, parameter.at(1) + roiFull.tl().y, parameter.at(2)));
-                globalParam.push_back(Point3f(curv, concentration, 0));
+                globalParam.push_back(Point3f(curv, concentration, objectLen));
             }
         }
 

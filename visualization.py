@@ -5,7 +5,7 @@ import glob
 import os
 import cv2
 import shutil
-#import beautifulplot as bp
+import beautifulplot as bp
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.patches as patches
@@ -21,6 +21,7 @@ import beautifulplot as bp
 import sys
 import traceback
 plt.style.use('seaborn-colorblind')
+from scipy import stats
 
 
 
@@ -173,7 +174,7 @@ class Trajectory:
         """
 
         concentration = self.data.iloc[self.index[fishNumber], [11]].reset_index(drop=True)
-        tmp = np.isnan(concentration[' concentration'])
+        '''tmp = np.isnan(concentration[' concentration'])
         for index, conc in enumerate(tmp):
             if conc == True:
                 count = 1
@@ -183,12 +184,28 @@ class Trajectory:
                 if index + count < len(tmp)-1:
                     concentration[' concentration'][index] = (concentration[' concentration'][index - 1] + concentration[' concentration'][index + count])*.5
                 else: 
-                    concentration[' concentration'][index] = concentration[' concentration'][index - 1]
+                    concentration[' concentration'][index] = concentration[' concentration'][index - 1]'''
 
         concentration -= 128
         concentration = self.normalization(concentration)
        
         return concentration[' concentration'].values
+    
+    def getFishLen(self, fishNumber):
+        """
+        Description: Extract the curvature of the fish
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: curvature
+        :type return: array of doubles
+        """
+
+        curv = self.data.iloc[self.index[fishNumber], [12]].reset_index(drop=True)
+        l = np.percentile(curv[' lenght'].values , 95)
+
+        
+       
+        return np.max(curv[' lenght']*(curv[' lenght'] < l))
 
 
 
@@ -337,6 +354,13 @@ class Trajectory:
 
 
     def timeInsideProduct(self, fishNumber):
+        """
+        Description: Extract the time spend in the product by the fish. Based on concentratio threshold.
+
+        :fishNumber: number of the fish to extract the parameter
+        :return: timeInside the product
+        :type return: array(leftCycle, rightCycle)
+        """
 
         x, y, o, t = self.getHeadPosition(fishNumber)
         t -= t[0]
@@ -344,13 +368,14 @@ class Trajectory:
         c = self.getConcentration(fishNumber)
         cThresh = c * (c > .35)
 
-        for index, conc in enumerate(cThresh):
-            if (index < self.Milestones[0][3]) and (x[index] < 250 or x[index] > 750) and conc != 0:
+
+        for index, conc in enumerate(cThresh): # Left and right border artefact remover
+            if (index < self.Milestones[0][3]) and (x[index] < 250 or x[index] > 750) and conc != 0: # Buffer cycle remove hight intensity artefact on left and right border
                 cThresh[index] = 0
 
-            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] > 750 and conc != 0:
+            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] > 750 and conc != 0: # Left cycle remove hight intensity artefact on the right border
                 cThresh[index] = 0
-            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] < 250 and conc == 0:
+            elif (index < self.Milestones[0][5]) and index > self.Milestones[0][3] and x[index] < 250 and conc == 0: # Left cycle remove low intensity artefact on the left border (replace by the concentration at the previous position)
                 cThresh[index] = cThresh[index - 1]
 
             elif (index < self.Milestones[0][7]) and index > self.Milestones[0][5] and (x[index] < 250 or x[index] > 750) and conc != 0:
@@ -363,34 +388,28 @@ class Trajectory:
 
 
 
-        fig, ax1 = plt.subplots()
-        timeInside = 0
-        deltatime = []
-        it = 0
-
-        while(it < len(c)-1):
+        #fig, ax1 = plt.subplots()
+        timeProd = np.zeros(2)
+        timeBuf = np.zeros(2)
+        for index, conc in enumerate(cThresh):
+           
+            if (index < self.Milestones[0][5]) and index > self.Milestones[0][3]): # Left cycle
+                if conc != 0:
+                    timeProd[0] += 1
+                else:
+                    timeBuf[0] += 1
+            elif (index < self.Milestones[0][7]): # Right cycle
+                if conc != 0:
+                    timeProd[1] += 1
+                else:
+                    timeBuf[1] += 1
             
-            if cThresh[it] != 0.:
-                count = 1
-                
-                while(cThresh[it + count] > 0.):
-                    count += 1
-
-                    if(it + count > len(cThresh)-1):
-                        count -= 1
-                        break
+        
+        
+        
 
                 
-                timeInside += t[it + count] - t[it]
-                deltatime.append(t[it + count] - t[it])
-                ax1.add_patch(patches.Rectangle((t[it], 0), t[it + count] - t[it], 1000, alpha=0.3, color='y'))
-                it += count
-                
-
-            else:
-                it += 1
-                
-        ax1.plot(t, x, '.-')
+        '''ax1.plot(t, x, '.-')
         ax1.plot(t, y, '.-')
         ax1.set_xlabel('time (s)')
         ax1.set_ylabel('x (px)')
@@ -401,12 +420,11 @@ class Trajectory:
         ax2.set_ylabel('Concentration', color='r')
         ax2.tick_params('y', colors='r')
 
-        fig.tight_layout()
+        fig.tight_layout()'''
 
         
 
-        return (timeInside/(t[-1]-t[0]))*100, deltatime
-
+        return timeProd/(timeProd+timeBuf)
 
 
 
@@ -491,16 +509,22 @@ ax1.set_title('Normalized preference index')'''
 
 
 
-'''label = ['0.01', '0.02', '0.03', '0.06', '0.1']
+label = ['0.01', '0.02', '0.03', '0.06', '0.1']
 folder = []
-folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/*/*'))
+'''folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.01pc/*/*'))
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.02pc/*/*'))
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.03pc/*/*'))
 folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.06pc/*/*'))
-folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/*/*'))
+folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.1pc/*/*'))'''
+
+label = ['0.02', '0.0008', '0.009']
+folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/Quinine/0.02/*/*'))
+folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/Quinine/0.0008/*/*'))
+folder.append(glob.glob('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/Quinine/0.009/*/*'))
 
 pool = []
 dist = []
+
 
 for i in folder:
     tmp = []
@@ -510,6 +534,9 @@ for i in folder:
             B = Trajectory(j)
             d, c = B.timeInsideProduct(0)
             tmp.append(d)
+            l = B.getFishLen(0)
+            plt.scatter(l, d)
+            print(j, l)
             for cc in c:
                 tmpMat.append(cc)
 
@@ -521,9 +548,10 @@ for i in folder:
     pool.append(tmp)
     dist.append(tmpMat)
 
-    
 
-fig = bp.BoxPlot()
+
+
+'''fig = bp.BoxPlot()
 fig.plot(pool, label = label)
 fig.addN()
 fig.limits(ylim = [0, 50])
@@ -534,13 +562,13 @@ fig2 = bp.BoxPlot()
 fig2.plot(dist, label = label)
 fig2.addN()
 fig2.plotPoints()
-fig2.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")'''
+fig2.addLabels(xlabel = 'Concentration g/L', ylabel = "Percentage of time in acid")
 
 
 
-'''fig3 = bp.BoxPlot()
-fig3.plot(pool, label = label)'''
-'''fig3.addN(size = 12)
+fig3 = bp.BoxPlot()
+fig3.plot(pool, label = label)
+fig3.addN(size = 12)
 fig3.limits(ylim = [-1, 1])
 fig3.plotPoints()
 fig3.addLabels(xlabel = 'Concentration g/L', ylabel = "Normalized preference index")
@@ -566,13 +594,14 @@ for i in folder:
 
 
 
-a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/0.02pc/2018-03-09/Run 1.01')
+'''a = Trajectory('/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/Quinine/0.0008/2018-05-03/Run 1.01')
+data = a.data
 x, y, o, t = a.getTailPosition(0)
 xh, yh, oh, th = a.getHeadPosition(0)
 t -= t[0]
 o = np.unwrap(o) #To check
-t = t* (1e-9)
-c = a.getConcentration(0)
+t = t* (1e-9)'''
+'''c = a.getConcentration(0)
 a.concentrationPlot(0)
 r = a.getDisplacement(0)
 c *= (c > 0.15)
@@ -581,7 +610,10 @@ changementOrient = (changementOrient + 180) % 360 - 180
 curv = a.getCurvature(0)
 bo = a.extractBoutsbyCurv(0)
 l = a.getDisplacement(0)
-d = a.timeInsideProduct(0)
+d = a.timeInsideProduct(0)'''
+
+
+
 
 
 

@@ -432,7 +432,6 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     pathListCount = 0;
     folder = pathList.at(pathListCount);
-    // pathField ->setText(QString::fromStdString(folder));
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
     ofstream log;
@@ -535,11 +534,11 @@ void MainWindow::Go(){
 
         if(im == 0){ // Initialization
 
-            logInit();
+
             timer->start();
             UpdateParameters();
             pathField ->setText(QString::fromStdString(folder));
-            //string folder = pathField->text().toStdString();
+            logInit();
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
 
@@ -679,10 +678,10 @@ void MainWindow::Go(){
             coord.y += ROI.tl().y;
             internalSaving.at(im*NUMBER + l) = coord;
             if(im == 0 && l == 0){
-                savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << '\n';
+                savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << "   " << "lenght" << '\n';
             }
 
-            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y << "\n";
+            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y <<  "   "  << out.at(3).at(l).z << "\n";
 
         }
 
@@ -697,25 +696,30 @@ void MainWindow::Go(){
         }
 
        else{
-            pathListCount++;
-            folder = pathList.at(pathListCount);
-            pathField ->setText(QString::fromStdString(folder));
-            savefile.close();
-            im = 0;
-            Go();
-           /*timer->stop();
-           ReplayButton->show();
-           PauseButton ->hide();
-           fps ->show();
-           fpsField ->show();
-           fpsSlider->show();
-           trackingSpot->hide();
-           trackingSpotLabel->hide();
-           im = 0;
-           statusBar()->showMessage(tr("Done"));
-           QMessageBox msgBox;
-           msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
-           msgBox.exec();*/
+           if(pathListCount < pathList.size() - 1){
+                pathListCount++;
+                folder = pathList.at(pathListCount);
+                pathField ->setText(QString::fromStdString(folder));
+                savefile.close();
+                im = 0;
+                Go();
+           }
+
+           else{
+               timer->stop();
+               //ReplayButton->show();
+              // PauseButton ->hide();
+               //fps ->show();
+               //fpsField ->show();
+               //fpsSlider->show();
+               //trackingSpot->hide();
+               //trackingSpotLabel->hide();
+               //im = 0;
+               statusBar()->showMessage(tr("Done"));
+               QMessageBox msgBox;
+               msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
+               msgBox.exec();
+           }
        }
     }
 

@@ -92,3 +92,5 @@ Rect AutoROI(UMat background);
 void FillMargin(Mat visu);
 
 #endif
+
+
