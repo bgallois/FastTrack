@@ -417,7 +417,7 @@ MainWindow::MainWindow(QWidget *parent) :
     size_t found = pathField->text().toStdString().find(".txt");
 
 
-    if (found != string::npos){// Multiple path
+    if (found != string::npos){// Multiple paths
         string line;
         ifstream pathFile (pathField->text().toStdString());
         if ( pathFile.is_open()){
@@ -581,8 +581,9 @@ void MainWindow::Go(){
         
         string name = *a;
 
-        //Rect ROI(x1, y1, x2 - x1, y2 - y1);
+
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
+        Registration(background, cameraFrame);
         string metadata = Metadata(name);
 
         visu = cameraFrame.getMat(ACCESS_FAST).clone();
@@ -649,7 +650,7 @@ void MainWindow::Go(){
             out.at(1) = Reassignment(outPrev.at(1), out.at(1), identity);
             out.at(2) = Reassignment(outPrev.at(2), out.at(2), identity);
             out.at(3) = Reassignment(outPrev.at(3), out.at(3), identity);
-            out.at(spot) = Prevision(outPrev.at(spot), out.at(spot));
+            out.at(3) = Prevision(outPrev.at(3), out.at(3));
             outPrev = out;
         }
 
@@ -681,7 +682,7 @@ void MainWindow::Go(){
                 savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << "   " << "lenght" << '\n';
             }
 
-            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y <<  "   "  << out.at(3).at(l).z << "\n";
+            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x + ROI.tl().x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y <<  "   "  << out.at(3).at(l).z << "\n";
 
         }
 

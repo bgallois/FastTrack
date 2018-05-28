@@ -503,17 +503,48 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
 
                 //Curvature
-                double curv = 1./1e-16;
+                /*double curv = 1./1e-16;
                 radiusCurv = CurvatureCenter(Point3f(xTail, yTail, angleTail), Point3f(xHead, yHead, angleHead));
                 if(radiusCurv.x != NAN){ //
                     curv = Curvature(radiusCurv, RoiFull.getMat(ACCESS_READ));
-                }
+                }*/
 
+                //Interface x-position
+                double curv;
+                vector<double> projection;
+                reduce(visu, projection, 0, CV_REDUCE_SUM);
+                int pMax = 0;
+                for(int p = 0; p < projection.size() - 1; p++){
+                    int a = projection.at(p + 1) - projection.at(p);
+                    if(a >= pMax){
+                        pMax = a;
+                    }
+                }
+                curv = pMax;
 
                 // Concentration around the head
                 double concentration;
+                int left, right, top, bottom;
+                left = xHead - 10;
+                right = xHead + 10;
+                top = yHead - 10;
+                bottom = yHead + 10;
+
                 try{
-                    Rect RoiConcentration(xHead - 10, yHead - 10, 20, 20);
+                    if(left < 0){
+                        left = xHead;
+                    }
+                    if(right > visu.cols){
+                        right = xHead;
+                    }
+                    if(top < 0){
+                        top = yHead;
+                    }
+                    if(bottom > visu.rows){
+                        bottom = yHead;
+                    }
+
+                    Rect RoiConcentration(left, top, right - left, bottom - top);
 
                     Mat RoiVisu = visu(RoiConcentration);
                     concentration = mean(RoiVisu)[0];
@@ -653,8 +684,8 @@ vector<Point3f> Prevision(vector<Point3f> past, vector<Point3f> present){
 
     for(unsigned int i = 0; i < past.size(); i++){
         if(past.at(i) == present.at(i)){
-            present.at(i).x += l*cos(present.at(i).z);
-            present.at(i).y -= l*sin(present.at(i).z);
+            present.at(i).x = NAN; //l*cos(present.at(i).z);
+            //present.at(i).y -= l*sin(present.at(i).z);
         }
     }
     return present;
