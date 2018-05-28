@@ -145,14 +145,8 @@ vector<double> Orientation(UMat image, bool dir) {
         vector<double> tmpMat;
         vector<double> tmp;
 
+        reduce(rotate, tmpMat, 0, CV_REDUCE_SUM);
 
-        for (int j = 0; j<rotate.cols; ++j){
-        double s = 0;
-            for (int i = 0; i<rotate.rows; ++i){
-              s += rotate.getMat(ACCESS_READ).at<uchar>(i, j);
-            }
-            tmpMat.push_back((double)s);
-        }
 
         majAxis = (double)tmpMat.size();
         double ccMax = *max_element(tmpMat.begin(), tmpMat.end())/100;
