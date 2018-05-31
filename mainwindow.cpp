@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("Fishy Tracking");
     statusBar()->showMessage(tr("Ready"));
 
-    cv::ocl::setUseOpenCL(false);
+    cv::ocl::setUseOpenCL(true);
     // Setup style
     QFile stylesheet(":/darkTheme.qss");
 
@@ -735,7 +735,7 @@ void MainWindow::Go(){
         //pathError.exec();
 
         ofstream log;
-        log.open("error.log", ios::out | ios::app );
+        log.open("errorAcid.log", ios::out | ios::app );
         log << pathList.at(pathListCount) << '\n';
         pathListCount++;
         folder = pathList.at(pathListCount);

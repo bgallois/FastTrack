@@ -298,8 +298,8 @@ UMat BackgroundExtraction(vector<String> files, double n){
         //tmp = imread(files[i], IMREAD_GRAYSCALE);
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
         tmp.convertTo(tmp, CV_32F);
-        cameraFrameReg = tmp(registrationFrame);
-        img0 = img0(registrationFrame);
+        cameraFrameReg = tmp;//(registrationFrame);
+        img0 = img0;//(registrationFrame);
         Point2d shift = phaseCorrelate(cameraFrameReg, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
         warpAffine(tmp, tmp, H, tmp.size());
@@ -504,14 +504,14 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 }*/
 
                 //Interface x-position
-                double curv;
+                double curv= 0;
                 vector<double> projection;
                 reduce(visu, projection, 0, CV_REDUCE_SUM);
                 int pMax = 0;
-                for(int p = 0; p < projection.size() - 1; p++){
+                for(int p = 0; p < projection.size() - 2; p++){
                     int a = projection.at(p + 1) - projection.at(p);
                     if(a >= pMax){
-                        pMax = a;
+                        pMax = p;
                     }
                 }
                 curv = pMax;
@@ -763,7 +763,7 @@ Rect AutoROI(UMat background){
             }
         }
     }
-    Rect ROI(minCol + 10, minRow + 10, maxCol - minCol - 20, maxRow - minRow  - 20);
+    Rect ROI(minCol + 15, minRow + 15, maxCol - minCol - 30, maxRow - minRow  - 30);
 
     return ROI;
 }
