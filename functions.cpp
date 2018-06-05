@@ -286,7 +286,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     background.convertTo(background, CV_32F);
     img0.convertTo(img0, CV_32F);
-    Rect registrationFrame(0, 0, 200, 50);
+    //Rect registrationFrame(0, 0, 200, 50);
     int step = 4000;
     //Mat tmp = imread(files[0], IMREAD_GRAYSCALE);
     UMat tmp;
@@ -298,8 +298,8 @@ UMat BackgroundExtraction(vector<String> files, double n){
         //tmp = imread(files[i], IMREAD_GRAYSCALE);
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
         tmp.convertTo(tmp, CV_32F);
-        cameraFrameReg = tmp(registrationFrame);
-        img0 = img0(registrationFrame);
+        cameraFrameReg = tmp;//(registrationFrame);
+        img0 = img0;//(registrationFrame);
         Point2d shift = phaseCorrelate(cameraFrameReg, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
         warpAffine(tmp, tmp, H, tmp.size());
@@ -320,7 +320,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
   * @param Mat imageReference: reference image for the registration, one channel
     * @param Mat frame: image to register
 */
-void Registration(UMat imageReference, UMat frame){
+void Registration(UMat imageReference, UMat& frame){
 
     //Rect registrationFrame(0, 0, 500, 500);
     frame.convertTo(frame, CV_32FC1);
@@ -331,6 +331,7 @@ void Registration(UMat imageReference, UMat frame){
     Point2d shift = phaseCorrelate(frame, imageReference);
     Mat H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
     warpAffine(frame, frame, H, frame.size());
+    frame.convertTo(frame, CV_8U);
 }
 
 
@@ -763,7 +764,7 @@ Rect AutoROI(UMat background){
             }
         }
     }
-    Rect ROI(minCol + 10, minRow + 10, maxCol - minCol - 20, maxRow - minRow  - 20);
+    Rect ROI(minCol , minRow , maxCol - minCol , maxRow - minRow  );
 
     return ROI;
 }
@@ -776,7 +777,7 @@ Rect AutoROI(UMat background){
 
 
 */
-void FillMargin(Mat frame){
+void FillMargin(Mat& frame){
 
     Rect innerROI(20, 20 , frame.cols - 40, frame.rows - 40);
 

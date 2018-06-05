@@ -543,6 +543,7 @@ void MainWindow::Go(){
             NUMBER = numField->text().toInt(); //number of objects to track
 
 
+
             try{
                 glob(folder, files, false);
                 checkPath(pathField->text());
@@ -568,6 +569,7 @@ void MainWindow::Go(){
             colorMap = Color(NUMBER);
 
             ROI = AutoROI(background);
+            imread(name, IMREAD_GRAYSCALE).copyTo(img0);
             
             
 
@@ -657,7 +659,7 @@ void MainWindow::Go(){
 
 
         // Visualization & saving
-       normalize(visu, visu, 0, 255, NORM_MINMAX);
+       normalize(visu, visu, 120, 242, NORM_MINMAX);
        applyColorMap(visu, visu, COLORMAP_JET);
        for(unsigned int l = 0; l < out.at(0).size(); l++){
             Point3f coord;
