@@ -667,7 +667,7 @@ void MainWindow::Go(){
             arrowedLine(visu, Point(coord.x, coord.y), Point(coord.x + 5*arrowSize*cos(coord.z), coord.y - 5*arrowSize*sin(coord.z)), Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 10*arrowSize, 0);
 
             if((im > 5)){
-                polylines(visu, memory.at(l), false, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 8, 0);
+                polylines(visu, memory.at(l), false, Scalar(0, 0, 255), arrowSize, 8, 0);
                 memory.at(l).push_back(Point((int)coord.x, (int)coord.y));
                 if(im>50){
                     memory.at(l).erase(memory.at(l).begin());
@@ -688,8 +688,13 @@ void MainWindow::Go(){
 
         }
 
-
-       emit grabFrame(visu, cameraFrame);
+       string saveImg = "/run/media/benjamin/HardDisk/saving/" + to_string(im) + ".png";
+       Mat visuF;
+       UMat cameraFrameInvert;
+       bitwise_not(cameraFrame, cameraFrameInvert);
+       visu.copyTo(visuF, cameraFrameInvert);
+       imwrite(saveImg, visuF);
+       emit grabFrame(visuF, cameraFrame);
 
 
        if(im < files.size() - 1){
