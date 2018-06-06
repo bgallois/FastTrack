@@ -505,14 +505,14 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
                 }*/
 
                 //Interface x-position
-                double curv;
+                double curv= 0;
                 vector<double> projection;
                 reduce(visu, projection, 0, CV_REDUCE_SUM);
                 int pMax = 0;
-                for(int p = 0; p < projection.size() - 1; p++){
+                for(int p = 0; p < projection.size() - 2; p++){
                     int a = projection.at(p + 1) - projection.at(p);
                     if(a >= pMax){
-                        pMax = a;
+                        pMax = p;
                     }
                 }
                 curv = pMax;
