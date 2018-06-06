@@ -64,7 +64,7 @@ double Concentration(vector<String> files);
 UMat BackgroundExtraction(vector<String> files, double n);
 
 
-void Registration(UMat imageReference, UMat frame);
+void Registration(UMat imageReference, UMat& frame);
 
 
 void Binarisation(UMat frame, char backgroundColor, int value);
@@ -89,7 +89,7 @@ vector<Point3f> Color(int number);
 Rect AutoROI(UMat background);
 
 
-void FillMargin(Mat visu);
+void FillMargin(Mat& visu);
 
 #endif
 
