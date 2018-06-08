@@ -145,6 +145,7 @@ private:
     Rect ROI;
     string folder;
     int pathListCount;
+    QString GPU;
 
 public slots:
     void Go();

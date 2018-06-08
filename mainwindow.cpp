@@ -30,6 +30,10 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->showMessage(tr("Ready"));
 
     cv::ocl::setUseOpenCL(true);
+    GPU = " on CPU";
+    if (cv::ocl::haveOpenCL()){
+            GPU = " on GPU";
+        }
     // Setup style
     QFile stylesheet(":/darkTheme.qss");
 
@@ -516,7 +520,7 @@ void MainWindow::Go(){
         numField->setDisabled(true);
         nBackField->setDisabled(true);
         saveField->setDisabled(true);
-        statusBar()->showMessage(tr("Running"));
+        statusBar()->showMessage("Running" + GPU);
 
 
 
