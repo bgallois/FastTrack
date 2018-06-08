@@ -88,8 +88,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     GoButton = new QPushButton("Go", this);
     logConnection = new QMetaObject::Connection;
-    *logConnection = QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(logInit())); // Order of this two connects
-    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(Go()));      // is crutial !!! this connection will be destroy after first execution to avoid erase the output file
+    *logConnection = QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(pathAquisition())); // Order of this two connects
+    QObject::connect(GoButton, SIGNAL(clicked()), this, SLOT(Go())); 
     GoButton ->setToolTip(tr("Press to begin the tracking."));
 
     PauseButton = new QPushButton("Pause", this);
@@ -408,20 +408,21 @@ MainWindow::MainWindow(QWidget *parent) :
     timer ->setInterval(1);
     connect(timer, SIGNAL(timeout()), this, SLOT(Go())); // Tracking
     connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
-
-    imr = 0; // Internal counter for the replay
-    timerReplay = new QTimer(this);
-    connect(timerReplay, SIGNAL(timeout()), this, SLOT(Replay())); // Replaying
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
-    size_t found = pathField->text().toStdString().find(".txt");
 
+
+}
+
+
+void MainWindow::pathAquisition(){
+    size_t found = pathField->text().toStdString().find(".txt");
 
     if (found != string::npos){// Multiple paths
         string line;
         ifstream pathFile (pathField->text().toStdString());
         if ( pathFile.is_open()){
-            while ( getline (pathFile,line) ){
+            while ( getline (pathFile, line) ){
             pathList.push_back(line);
             }
         pathFile.close();
@@ -432,22 +433,8 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     pathListCount = 0;
     folder = pathList.at(pathListCount);
-    QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
-
-    ofstream log;
-    log.open("error.log");
-}
-
-
-/**
-    * @logInit: open text file for output and log.
-*/
-void MainWindow::logInit(){
-    
-    savePath = saveField->text().toStdString();
-    savefile.open(savePath);
-    QObject::disconnect(*logConnection); // Delete the connection to avoid erasing the file by clicking another time on the GoButton
-
+    pathField ->setText(QString::fromStdString(folder));
+    QObject::disconnect(*logConnection);
 }
 
 
@@ -537,14 +524,15 @@ void MainWindow::Go(){
 
             timer->start();
             UpdateParameters();
-            pathField ->setText(QString::fromStdString(folder));
-            logInit();
+            savePath = saveField->text().toStdString();
+            savefile.open(savePath);
             nBackground = nBackField->text().toInt();
             NUMBER = numField->text().toInt(); //number of objects to track
 
 
 
             try{
+                cout << folder << endl;
                 glob(folder, files, false);
                 checkPath(pathField->text());
                 UpdateParameters();
@@ -715,14 +703,6 @@ void MainWindow::Go(){
 
            else{
                timer->stop();
-               //ReplayButton->show();
-              // PauseButton ->hide();
-               //fps ->show();
-               //fpsField ->show();
-               //fpsSlider->show();
-               //trackingSpot->hide();
-               //trackingSpotLabel->hide();
-               //im = 0;
                statusBar()->showMessage(tr("Done"));
                QMessageBox msgBox;
                msgBox.setText("The tracking is done!!! \n You can replay the tracking by clicking the replay button.");
@@ -731,15 +711,10 @@ void MainWindow::Go(){
        }
     }
 
-    catch (const Exception &exc){ // Out of image error
+    catch ( ... ){ // Out of image error
         timer->stop();
         PauseButton ->setText("Play");
         pause = false;
-        QMessageBox pathError;
-        pathError.setText("The ROI does not fit the image size or there is no object in the image. Please try changing the ROI and the minimal area of the object.");
-        x2ROIField->setStyleSheet("background-color: red;");
-        y2ROIField->setStyleSheet("background-color: red;");
-        //pathError.exec();
 
         ofstream log;
         log.open("errorAcid.log", ios::out | ios::app );
@@ -752,48 +727,6 @@ void MainWindow::Go(){
         Go();
     }
 
-    catch(const std::out_of_range& oor){ // Out of range error
-        timer->stop();
-        PauseButton ->setText("Play");
-        pause = false;
-        QMessageBox pathError;
-        pathError.setText("Too many objects in the image that indicated in parameters, try to increase the number of objects or to increase the minimal area of an object.");
-        binary ->setChecked(1);
-        binary ->isChecked();
-        emit grabFrame(visu, cameraFrame);
-        savefile.close();
-        // pathError.exec();
-
-        ofstream log;
-        log.open("error.log", ios::out | ios::app );
-        log << pathList.at(pathListCount) << '\n';
-        pathListCount++;
-        folder = pathList.at(pathListCount);
-        pathField ->setText(QString::fromStdString(folder));
-        im = 0;
-        Go();
-
-    }
-
-
-    catch (const exception &exc){ // Unknown error
-        timer->stop();
-        PauseButton ->setText("Play");
-        pause = false;
-        QMessageBox pathError;
-        pathError.setText(exc.what());
-        savefile.close();
-        //pathError.exec();
-
-        ofstream log;
-        log.open("error.log", ios::out | ios::app );
-        log << pathList.at(pathListCount) << '\n';
-        pathListCount++;
-        folder = pathList.at(pathListCount);
-        pathField ->setText(QString::fromStdString(folder));
-        im = 0;
-        Go();
-    }
 
 }
 
