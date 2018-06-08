@@ -693,6 +693,11 @@ void MainWindow::Go(){
 
        else{
            if(pathListCount < pathList.size() - 1){
+               ofstream log;
+                log.open("error.log", ios::out | ios::app );
+                log << pathList.at(pathListCount) << '\t' << "Done" << '\n';
+                log.close();
+
                 pathListCount++;
                 folder = pathList.at(pathListCount);
                 pathField ->setText(QString::fromStdString(folder));
@@ -711,14 +716,15 @@ void MainWindow::Go(){
        }
     }
 
-    catch ( ... ){ // Out of image error
+    catch ( ... ){ // All errors
         timer->stop();
         PauseButton ->setText("Play");
         pause = false;
 
         ofstream log;
-        log.open("errorAcid.log", ios::out | ios::app );
-        log << pathList.at(pathListCount) << '\n';
+        log.open("error.log", ios::out | ios::app );
+        log << pathList.at(pathListCount) << '\t' << "Error" << '\n';
+        log.close();
         pathListCount++;
         folder = pathList.at(pathListCount);
         pathField ->setText(QString::fromStdString(folder));
