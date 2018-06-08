@@ -156,7 +156,7 @@ public slots:
     void PlayPause();
     void checkPath(QString);
     void setSavePath(QString);
-    void logInit();
+    void pathAquisition();
 
 signals:
     void grabFrame(Mat visu, UMat cameraFrame);
