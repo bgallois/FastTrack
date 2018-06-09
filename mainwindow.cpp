@@ -696,11 +696,13 @@ void MainWindow::Go(){
         }
 
        else{
+
+           ofstream log;
+            log.open("error.log", ios::out | ios::app );
+            log << pathList.at(pathListCount) << '\t' << "Done" << '\n';
+            log.close();
+
            if(pathListCount < pathList.size() - 1){
-               ofstream log;
-                log.open("error.log", ios::out | ios::app );
-                log << pathList.at(pathListCount) << '\t' << "Done" << '\n';
-                log.close();
 
                 pathListCount++;
                 folder = pathList.at(pathListCount);
@@ -711,6 +713,7 @@ void MainWindow::Go(){
            }
 
            else{
+               savefile.close();
                timer->stop();
                statusBar()->showMessage(tr("Done"));
                QMessageBox msgBox;
@@ -727,7 +730,7 @@ void MainWindow::Go(){
 
         ofstream log;
         log.open("error.log", ios::out | ios::app );
-        log << pathList.at(pathListCount) << '\t' << "Error" << '\n';
+        log << pathList.at(pathListCount) << '\t' << "Error at frame" << to_string(im) << '\n';
         log.close();
         pathListCount++;
         folder = pathList.at(pathListCount);
