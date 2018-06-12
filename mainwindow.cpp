@@ -537,7 +537,6 @@ void MainWindow::Go(){
 
 
             try{
-                cout << folder << endl;
                 glob(folder, files, false);
                 checkPath(pathField->text());
                 UpdateParameters();
@@ -614,21 +613,14 @@ void MainWindow::Go(){
             }
 
             else if(out.at(0).empty()){ // Error message
-                timer->stop();
-                QMessageBox errorBox;
-                errorBox.setText("No fish detected! Change parameters!");
-                binary ->setChecked(1);
-                binary ->isChecked();
-                emit grabFrame(visu, cameraFrame);
-                //errorBox.exec();
+                for(int i = 0; i < NUMBER; i++){
+                    out.at(0).push_back(Point3f(0, 0, 0));
+                    out.at(1).push_back(Point3f(0, 0, 0));
+                    out.at(2).push_back(Point3f(0, 0, 0));
+                    out.at(3).push_back(Point3f(0, 0, 0));
+                }
 
-                ofstream log;
-                log.open("error.log", ios::out | ios::app );
-                log << name << '\n';
-                pathListCount++;
-                folder = pathList.at(pathListCount);
-                pathField ->setText(QString::fromStdString(folder));
-                im = 0;
+
 
             }
 
