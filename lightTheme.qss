@@ -1,0 +1,160 @@
+QPushButton {
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+}
+
+QLineEdit {
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+}
+
+QLabel {
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+
+}
+
+
+QComboBox{
+        background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+
+}
+
+
+QComboBox QAbstractItemView {
+    background-color: #edf3ff;
+    border-radius: 10px;
+    border-color: #edf3ff;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+}
+
+
+QSlider{
+        background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+
+}
+
+QLCDNumber{
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+
+}
+
+QCheckBox{
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: black;
+    font: bold 14px;
+    color: black;
+    padding: 6px;
+
+}
+
+
+QProgressBar {
+    background-color: #edf3ff;
+    border: 1px solid black;
+    border-radius: 10px;
+    text-align: center;
+    color: black;
+    border-radius: 10px;
+}
+
+QProgressBar::chunk {
+    background-color: #edf3ff;
+    width: 10px;
+    margin: 0.5px;
+    border-radius: 10px;
+
+}
+
+
+QSlider::groove:horizontal {
+    border: 1px solid #edf3ff;
+    height: 8px;
+    background: #edf3ff;
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+    background: black;
+    width: 18px;
+    margin: -2px 0;
+    border-radius: 3px;
+}
+
+QWidget#central {
+    background: #edf3ff;
+}
+
+
+QWidget#display{
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: black;
+    padding: 6px;
+}
+
+QWidget#display2{
+    background-color: #edf3ff;
+    border-style: outset;
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: black;
+    padding: 6px;
+}
+
+QMessageBox{
+    background-color: #edf3ff;
+}
+
+QStatusBar {
+    background-color: #edf3ff;
+    color: black;
+
+
+}

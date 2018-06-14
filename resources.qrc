@@ -1,5 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix='/'>
         <file>darkTheme.qss</file>
+	<file>lightTheme.qss</file>
+	<file>fancyTheme.qss</file>
     </qresource>
 </RCC>

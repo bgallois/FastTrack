@@ -80,6 +80,13 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
 
+    theme = new QComboBox(this);
+    theme ->addItem(tr("Dark"));
+    theme ->addItem(tr("Light"));
+    theme ->addItem(tr("Fancy"));
+    statusBar()->addPermanentWidget(theme);
+    QObject::connect(theme, SIGNAL(currentIndexChanged(int)), this, SLOT(changeTheme(int)));
+
     // Widgets layout
 
     QuitButton = new QPushButton("Quit", this);
@@ -467,6 +474,39 @@ void MainWindow::PlayPause(){
 
 
 
+void MainWindow::changeTheme(int index){
+
+    switch(index){
+        case 0:
+    {
+            QFile stylesheet(":/darkTheme.qss");
+            if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) { // Read the theme file
+                qApp->setStyleSheet(stylesheet.readAll());
+                stylesheet.close();
+            }
+            break;
+    }
+        case 1:
+    {
+            QFile stylesheet(":/lightTheme.qss");
+            if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) { // Read the theme file
+                qApp->setStyleSheet(stylesheet.readAll());
+                stylesheet.close();
+            }
+            break;
+    }
+        case 2:
+    {
+            QFile stylesheet(":/fancyTheme.qss");
+            if(stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) { // Read the theme file
+                qApp->setStyleSheet(stylesheet.readAll());
+                stylesheet.close();
+            }
+            break;
+    }
+    }
+
+}
 
 
 
