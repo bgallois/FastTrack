@@ -713,7 +713,7 @@ void MainWindow::Go(){
                 savefile << "xHead" << "   " << "yHead" << "   " << "tHead" << "   "  << "xTail" << "   " << "yTail" << "   " << "tTail"   <<  "   " << "xBody" << "   " << "yBody" << "   " << "tBody"   <<  "   " << "curvature" <<  "   " << "imageNumber" << "   " << "concentration" << "   " << "lenght" << '\n';
             }
 
-            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().y << "   " << out.at(2).at(l).y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x + ROI.tl().x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y <<  "   "  << out.at(3).at(l).z << "\n";
+            savefile << out.at(0).at(l).x + ROI.tl().x << "   " << out.at(0).at(l).y + ROI.tl().y << "   " << out.at(0).at(l).z << "   "  << out.at(1).at(l).x + ROI.tl().x << "   " << out.at(1).at(l).y + ROI.tl().y << "   " << out.at(1).at(l).z  <<  "   " << out.at(2).at(l).x + ROI.tl().x << "   " << out.at(2).at(l).y + ROI.tl().y << "   " << out.at(2).at(l).z <<  "   " << out.at(3).at(l).x <<  "   " << metadata <<  "   "  << out.at(3).at(l).y <<  "   "  << out.at(3).at(l).z << "\n";
 
         }
 
