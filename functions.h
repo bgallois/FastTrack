@@ -75,6 +75,7 @@ string Metadata(string name);
 
 
 vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
+vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, UMat visu);
 
 
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGHT, const double ANGLE, const double WEIGHT, const double LO);
@@ -89,7 +90,7 @@ vector<Point3f> Color(int number);
 Rect AutoROI(UMat background);
 
 
-void FillMargin(Mat& visu);
+void FillMargin(UMat& visu);
 
 #endif
 

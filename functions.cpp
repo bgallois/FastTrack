@@ -760,8 +760,8 @@ Rect AutoROI(UMat background){
 
 
 */
-void FillMargin(Mat& frame){
-
+void FillMargin(UMat& uFrame){
+    Mat frame = uFrame.getMat(ACCESS_RW);
     Rect innerROI(20, 20 , frame.cols - 40, frame.rows - 40);
 
     for(int row = 0; row < frame.rows; row++){
@@ -800,7 +800,7 @@ void FillMargin(Mat& frame){
         }
     }
     GaussianBlur(frame, frame, Size(5, 5), 0, 0);
-    
+    frame.copyTo(uFrame);
 }
 
 

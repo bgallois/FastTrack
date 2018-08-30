@@ -419,7 +419,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this); // Tracking timer
     timer ->setInterval(1);
     connect(timer, SIGNAL(timeout()), this, SLOT(Go())); // Tracking
-    connect(this, SIGNAL(grabFrame(Mat, UMat)), this, SLOT(Display(Mat, UMat))); // Displaying
+    connect(this, SIGNAL(grabFrame(UMat, UMat)), this, SLOT(Display(UMat, UMat))); // Displaying
     QObject::connect(PauseButton, SIGNAL(clicked()), this, SLOT(PlayPause()));
 
 
@@ -619,7 +619,7 @@ void MainWindow::Go(){
         Registration(background, cameraFrame);
         string metadata = Metadata(name);
 
-        visu = cameraFrame.getMat(ACCESS_FAST).clone();
+        visu = cameraFrame.clone();
 
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
@@ -780,7 +780,7 @@ void MainWindow::Go(){
     * @param Mat visu: original image.
     * @param UMat cameraFrame: binary image.
 */
-void MainWindow::Display(Mat visu, UMat cameraFrame){
+void MainWindow::Display(UMat visu, UMat cameraFrame){
 
     int w = display->width();
     int h = display->height();
@@ -796,7 +796,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
     else if (normal->isChecked() && !binary->isChecked()){
         cvtColor(visu,visu,CV_BGR2RGB);
 
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.getMat(cv::ACCESS_READ).data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
     }
 
@@ -809,7 +809,7 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
 
     else if (normal->isChecked() && binary->isChecked()){ // Display the original image and the binary mask
         cvtColor(visu,visu,CV_BGR2RGB);
-        display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+        display->setPixmap(QPixmap::fromImage(QImage(visu.getMat(cv::ACCESS_READ).data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)).scaled(w2, h2, Qt::KeepAspectRatio));
     }
 
