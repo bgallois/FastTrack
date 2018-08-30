@@ -595,6 +595,11 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
+	    vector<UMat> minMaxVect;
+	    cout << minMaxVect.size() << endl;
+	    minMaxVect = MinMaxFrame(files);
+	    minFrame = minMaxVect.at(1);
+	    maxFrame = minMaxVect.at(0);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
@@ -628,7 +633,9 @@ void MainWindow::Go(){
         //background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
        // visu.convertTo(visu, CV_8U, 0.5, 128);
 
-        ConcentrationMap(visu, cameraFrame);
+        //ConcentrationMap(visu, cameraFrame);
+        //subtract(visu, background, visu);
+	ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame);
 
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);

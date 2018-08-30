@@ -292,6 +292,7 @@ UMat BackgroundExtraction(vector<String> files, double n){
     for(unsigned int i = 1000; i < 4000; i++){
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
         tmp.convertTo(tmp, CV_32F);
+        Point2d shift = phaseCorrelate(tmp, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
         warpAffine(tmp, tmp, H, tmp.size());
         accumulate(tmp, background);
@@ -381,6 +382,79 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
 }
 
 
+/**
+  *@ConcentrationMapNormalized normalized the background of each image element wise as:
+	NI = (I - Imin) / (Imax - Imin); Uint8
+  *param UMat &visu: input output image
+  *param UMat cameraFrame: binary image
+  *param UMat minFrame: temporal minimum
+  *param UMat maxFrame : temporal maximum
+*/
+void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame){
+    
+    Mat cameraFrameDilated;
+    int morph_size = 17;
+    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
+    dilate(cameraFrame, cameraFrameDilated, element);
+    inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
+    UMat tmp1, tmp2;
+    visu.convertTo(visu, CV_32F);
+    maxFrame.convertTo(maxFrame, CV_32F);
+    minFrame.convertTo(minFrame, CV_32F);
+    subtract(visu, minFrame, tmp1);
+    subtract(maxFrame, minFrame, tmp2);
+    divide(tmp1, tmp2, visu);
+    visu.convertTo(visu, CV_8U, 255);
+    imwrite("/home/ljp/Desktop/visu.pgm", visu); 
+}
+
+/**
+  * @MinMaxFrame computes the image of the maxima and the image of minima for each pixel.
+  * @param vector<String> files: vector of path to the image of the sequence.
+  * @return vector<UMat>: {maximum frame, minimumFrame}.
+*/
+vector<UMat> MinMaxFrame(vector<String> files) {
+
+    UMat minFrame;
+    imread(files[0], IMREAD_GRAYSCALE).copyTo(minFrame);
+    UMat maxFrame;
+    imread(files[0], IMREAD_GRAYSCALE).copyTo(maxFrame);
+    minFrame.setTo(255);
+    UMat img0;
+    imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
+    img0.convertTo(img0, CV_32F);
+    UMat tmp;
+    Mat H;
+    UMat binary;
+
+    for(unsigned int i = 0; i < files.size(); i++){
+
+	// Registration
+        imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
+        tmp.convertTo(tmp, CV_32F);
+        Point2d shift = phaseCorrelate(tmp, img0);
+        H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
+        warpAffine(tmp, tmp, H, tmp.size());
+    	tmp.convertTo(tmp, CV_8U);
+	
+	//Image of maximum
+    	cv::max(tmp, maxFrame, maxFrame);
+    	
+	// Image of minimum
+    	threshold(tmp, binary, 110, 255, CV_THRESH_BINARY_INV);
+	UMat cameraFrameDilated;
+    	int morph_size = 21;
+    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
+    	dilate(tmp, cameraFrameDilated, element );
+	bitwise_or(tmp, cameraFrameDilated,tmp);
+	cv::min(tmp, minFrame, minFrame);
+
+//	imwrite("/home/ljp/Desktop/test.pgm", minFrame);
+    }
+    imwrite("/home/ljp/Desktop/min.pgm", minFrame);
+    imwrite("/home/ljp/Desktop/max.pgm", maxFrame);
+    return {maxFrame, minFrame};
+}
 
 
 /**
@@ -390,7 +464,7 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
     * @param int maxSize: maximal size of the object
   * @return vector<vector<Point3f>>: {head parameters, tail parameters, global parameter}, {head/tail parameters} = {x, y, orientation}, {global parameter} = {curvature, 0, 0}
 */
-vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu){
+vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMat visu){
 
     vector<vector<Point> > contours;
     vector<Point3f> positionHead;

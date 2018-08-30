@@ -112,9 +112,11 @@ private:
     vector <String>::iterator a;
 
     UMat cameraFrame;
-    Mat visu;
+    UMat visu;
     UMat img0;
     UMat background;
+    UMat minFrame;
+    UMat maxFrame;
     Mat concentrationImg;
     vector<vector<Point> > memory;
     vector<string> pathList;
@@ -152,7 +154,7 @@ public slots:
     void Go();
     void Write();
     void Reset();
-    void Display(Mat visu, UMat cameraFrame);
+    void Display(UMat visu, UMat cameraFrame);
     void Replay();
     void UpdateParameters();
     void PlayPause();
@@ -162,7 +164,7 @@ public slots:
     void changeTheme(int index);
 
 signals:
-    void grabFrame(Mat visu, UMat cameraFrame);
+    void grabFrame(UMat visu, UMat cameraFrame);
 };
 
 #endif // MAINWINDOW_H

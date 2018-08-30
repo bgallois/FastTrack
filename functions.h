@@ -73,8 +73,10 @@ void Binarisation(UMat frame, char backgroundColor, int value);
 void ConcentrationMap(Mat& visu, UMat cameraFrame);
 string Metadata(string name);
 
+void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame);
 
-vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, Mat visu);
+vector<UMat> MinMaxFrame(vector<String> files);
+
 vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, UMat visu);
 
 
