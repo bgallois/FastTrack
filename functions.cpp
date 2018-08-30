@@ -131,9 +131,7 @@ vector<double> Orientation(UMat image, bool dir) {
     double majAxis;
 
     if(dir == true){ // Orientation computation
-        //Two methods available here to compute the direction
 
-        //////////////////////With a rotation of image/////////////////////////////////////
         UMat rotate;
         Point center = Point(image.cols*0.5, image.rows*0.5);
         Mat rotMatrix = getRotationMatrix2D(center, -orientationDeg, 1);
@@ -286,26 +284,18 @@ UMat BackgroundExtraction(vector<String> files, double n){
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     background.convertTo(background, CV_32F);
     img0.convertTo(img0, CV_32F);
-    //Rect registrationFrame(0, 0, 200, 50);
     int step = 4000;
-    //Mat tmp = imread(files[0], IMREAD_GRAYSCALE);
     UMat tmp;
-    UMat cameraFrameReg;
     Mat H;
     UMat identity = UMat::ones(background.rows, background.cols, CV_32F);
 
     for(unsigned int i = 1000; i < 4000; i++){
-        //tmp = imread(files[i], IMREAD_GRAYSCALE);
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
         tmp.convertTo(tmp, CV_32F);
-        cameraFrameReg = tmp;//(registrationFrame);
-        img0 = img0;//(registrationFrame);
-        Point2d shift = phaseCorrelate(cameraFrameReg, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
         warpAffine(tmp, tmp, H, tmp.size());
         accumulate(tmp, background);
     }
-    //background /= (n-1);
     multiply(background, identity, background, 1./(3001.));
     background.convertTo(background, CV_8U);
 
@@ -322,11 +312,8 @@ UMat BackgroundExtraction(vector<String> files, double n){
 */
 void Registration(UMat imageReference, UMat& frame){
 
-    //Rect registrationFrame(0, 0, 500, 500);
     frame.convertTo(frame, CV_32FC1);
     imageReference.convertTo(imageReference, CV_32FC1);
-    //imageReference = imageReference(registrationFrame);
-    //Mat frameReg = frame(registrationFrame);
 
     Point2d shift = phaseCorrelate(frame, imageReference);
     Mat H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
@@ -369,7 +356,6 @@ void Binarisation(UMat frame, char backgroundColor, int value){
     frame.convertTo(frame, CV_8U);
 
     if(backgroundColor == 'b'){
-        //threshold(frame, frame, 0, 255, CV_THRESH_BINARY| CV_THRESH_OTSU);
         threshold(frame, frame, value, 255, CV_THRESH_BINARY);
     }
 
@@ -392,9 +378,6 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
     Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
     dilate(cameraFrame, cameraFrameDilated, element );
     inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
-    //medianBlur(visu, visu, 7 );
-    //normalize(visu, visu, 0, 255, NORM_MINMAX);
-    //applyColorMap(visu, visu, COLORMAP_JET);
 }
 
 
@@ -541,7 +524,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, Mat
 
                     Rect RoiConcentration(left, top, right - left, bottom - top);
 
-                    Mat RoiVisu = visu(RoiConcentration);
+                    UMat RoiVisu = visu(RoiConcentration);
                     concentration = mean(RoiVisu)[0];
                 }
                 catch(...){

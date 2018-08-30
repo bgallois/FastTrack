@@ -595,7 +595,6 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
-            //double concentration = Concentration(files);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
@@ -625,16 +624,15 @@ void MainWindow::Go(){
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
-        Mat tmp;
-        background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
-        visu.convertTo(visu, CV_8U, 0.5, 128);
-        subtract(visu, tmp, visu);
+        //Mat tmp;
+        //background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
+       // visu.convertTo(visu, CV_8U, 0.5, 128);
 
         ConcentrationMap(visu, cameraFrame);
 
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
-        FillMargin(visu);
+        //FillMargin(visu);
 
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
@@ -824,104 +822,104 @@ void MainWindow::Display(Mat visu, UMat cameraFrame){
 */
 void MainWindow::Replay(){
 
-    // Get parameters
-    QString path = pathField->text();
-    QString num = numField->text();
-
-    int arrowSize = arrowField-> value();
-    QString x1ROI = x1ROIField->text();
-    QString x2ROI = x2ROIField->text();
-    QString y1ROI = y1ROIField->text();
-    QString y2ROI = y2ROIField->text();
-
-
-    pathField->setDisabled(true);
-    numField->setDisabled(true);
-    maxAreaField->setDisabled(true);
-    minAreaField->setDisabled(true);
-    lengthField->setDisabled(true);
-    angleField->setDisabled(true);
-    loField->setDisabled(true);
-    wField->setDisabled(true);
-    nBackField->setDisabled(true);
-    threshField->setDisabled(true);
-    saveField->setDisabled(true);
-    x1ROIField->setDisabled(true);
-    x2ROIField->setDisabled(true);
-    y1ROIField->setDisabled(true);
-    y2ROIField->setDisabled(true);
-
-
-
-
-
-    // Convert parameters
-    unsigned int NUMBER = num.toInt(); //number of objects to track
-    int FPS = fpsField->value();
-    FPS = int((1000.)/(float(FPS)));
-
-
-
-
-
-
-
-    if(imr == 0){ // Initialization
-
-        timerReplay->start(FPS);
-        a = files.begin();
-        string name = *a;
-        progressBar ->setRange(0, files.size());
-        visu = imread(name);
-        vector<vector<Point> > tmp(NUMBER, vector<Point>());
-        memory = tmp;
-
-
-    }
-
-
-    string name = *a;
-    visu = imread(name);
-    timerReplay ->setInterval(FPS);
-
-
-
-    // Visualization & saving
-   for(unsigned int l = 0; l < NUMBER; l++){
-        Point3f coord;
-        coord = internalSaving.at(imr*NUMBER + l);
-        arrowedLine(visu, Point(coord.x, coord.y), Point(coord.x + 5*arrowSize*cos(coord.z), coord.y - 5*arrowSize*sin(coord.z)), Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 10*arrowSize, 0);
-
-        if((imr > 5)){
-            polylines(visu, memory.at(l), false, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 8, 0);
-            memory.at(l).push_back(Point((int)coord.x, (int)coord.y));
-            if(imr>50){
-                memory.at(l).erase(memory.at(l).begin());
-                }
-        }
-    }
-
-
-
-   cvtColor(visu,visu,CV_BGR2RGB);
-
-   int w = display->width();
-   int h = display->height();
-
-   display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
-   display2->clear();
-
-    if(imr < files.size() - 1){
-        a ++;
-        imr ++;
-        progressBar->setValue(imr);
-     }
-
-    else{
-        timerReplay->stop();
-        imr = 0;
-    }
-
+//    // Get parameters
+//    QString path = pathField->text();
+//    QString num = numField->text();
+//
+//    int arrowSize = arrowField-> value();
+//    QString x1ROI = x1ROIField->text();
+//    QString x2ROI = x2ROIField->text();
+//    QString y1ROI = y1ROIField->text();
+//    QString y2ROI = y2ROIField->text();
+//
+//
+//    pathField->setDisabled(true);
+//    numField->setDisabled(true);
+//    maxAreaField->setDisabled(true);
+//    minAreaField->setDisabled(true);
+//    lengthField->setDisabled(true);
+//    angleField->setDisabled(true);
+//    loField->setDisabled(true);
+//    wField->setDisabled(true);
+//    nBackField->setDisabled(true);
+//    threshField->setDisabled(true);
+//    saveField->setDisabled(true);
+//    x1ROIField->setDisabled(true);
+//    x2ROIField->setDisabled(true);
+//    y1ROIField->setDisabled(true);
+//    y2ROIField->setDisabled(true);
+//
+//
+//
+//
+//
+//    // Convert parameters
+//    unsigned int NUMBER = num.toInt(); //number of objects to track
+//    int FPS = fpsField->value();
+//    FPS = int((1000.)/(float(FPS)));
+//
+//
+//
+//
+//
+//
+//
+//    if(imr == 0){ // Initialization
+//
+//        timerReplay->start(FPS);
+//        a = files.begin();
+//        string name = *a;
+//        progressBar ->setRange(0, files.size());
+//        visu = imread(name);
+//        vector<vector<Point> > tmp(NUMBER, vector<Point>());
+//        memory = tmp;
+//
+//
+//    }
+//
+//
+//    string name = *a;
+//    visu = imread(name);
+//    timerReplay ->setInterval(FPS);
+//
+//
+//
+//    // Visualization & saving
+//   for(unsigned int l = 0; l < NUMBER; l++){
+//        Point3f coord;
+//        coord = internalSaving.at(imr*NUMBER + l);
+//        arrowedLine(visu, Point(coord.x, coord.y), Point(coord.x + 5*arrowSize*cos(coord.z), coord.y - 5*arrowSize*sin(coord.z)), Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 10*arrowSize, 0);
+//
+//        if((imr > 5)){
+//            polylines(visu, memory.at(l), false, Scalar(colorMap.at(l).x, colorMap.at(l).y, colorMap.at(l).z), arrowSize, 8, 0);
+//            memory.at(l).push_back(Point((int)coord.x, (int)coord.y));
+//            if(imr>50){
+//                memory.at(l).erase(memory.at(l).begin());
+//                }
+//        }
+//    }
+//
+//
+//
+//   cvtColor(visu,visu,CV_BGR2RGB);
+//
+//   int w = display->width();
+//   int h = display->height();
+//
+//   display->setPixmap(QPixmap::fromImage(QImage(visu.data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
+//   display2->clear();
+//
+//    if(imr < files.size() - 1){
+//        a ++;
+//        imr ++;
+//        progressBar->setValue(imr);
+//     }
+//
+//    else{
+//        timerReplay->stop();
+//        imr = 0;
+//    }
+//
 }
 
 
