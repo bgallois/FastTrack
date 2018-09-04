@@ -75,9 +75,9 @@ string Metadata(string name);
 
 void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame);
 
-vector<UMat> MinMaxFrame(vector<String> files);
+vector<UMat> MinMaxFrame(vector<String> files, UMat background);
 
-vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, UMat visu);
+vector<vector<Point3f> > ObjectPosition(UMat frame, int minSize, int maxSize, UMat& visu);
 
 
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGHT, const double ANGLE, const double WEIGHT, const double LO);

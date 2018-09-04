@@ -596,14 +596,12 @@ void MainWindow::Go(){
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
 	    vector<UMat> minMaxVect;
-	    cout << minMaxVect.size() << endl;
-	    minMaxVect = MinMaxFrame(files);
+	    minMaxVect = MinMaxFrame(files, background);
 	    minFrame = minMaxVect.at(1);
 	    maxFrame = minMaxVect.at(0);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
-
             ROI = AutoROI(background);
             imread(name, IMREAD_GRAYSCALE).copyTo(img0);
             
@@ -625,25 +623,45 @@ void MainWindow::Go(){
         string metadata = Metadata(name);
 
         visu = cameraFrame.clone();
-
+	UMat img0;
+	imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
+        Registration(background, visu);
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
-
-        //Mat tmp;
-        //background.getMat(ACCESS_READ).convertTo(tmp, CV_8U, 0.5, 0);
-       // visu.convertTo(visu, CV_8U, 0.5, 128);
-
-        //ConcentrationMap(visu, cameraFrame);
-        //subtract(visu, background, visu);
 	ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame);
+    	int morph_size = 9;
+	UMat cameraFrameDilated;
+    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
+	dilate(cameraFrame, cameraFrameDilated, element);
+	inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
 
-        cameraFrame = cameraFrame(ROI);
+	//In testing to subtract static image after normalization
+	if (im == 0){
+		fond = visu.clone();
+	}
+	if (im < 2000 && im > 1){
+    		visu.convertTo(visu, CV_32F);
+    		fond.convertTo(fond, CV_32F);
+		add(visu, fond, fond);
+    		visu.convertTo(visu, CV_8U);
+    		fond.convertTo(fond, CV_8U, 0.5);
+	
+	}
+	subtract(fond, visu, visu);
+	///////
+	
+
+	cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
-        //FillMargin(visu);
-
+        FillMargin(visu);
+	GaussianBlur(visu, visu, Size(7, 7), 0, 0);
+	normalize(visu, visu, 255, 0, NORM_MINMAX);
+	
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
 
+	string imgName = "/home/ljp/Desktop/concentration/" + to_string(im) + ".pgm";
+	imwrite(imgName, visu);
 
         if(im == 0){ // First frame initialization
 
@@ -689,7 +707,6 @@ void MainWindow::Go(){
 
 
         // Visualization & saving
-       normalize(visu, visu, 120, 242, NORM_MINMAX);
        applyColorMap(visu, visu, COLORMAP_JET);
        for(unsigned int l = 0; l < out.at(0).size(); l++){
             Point3f coord;

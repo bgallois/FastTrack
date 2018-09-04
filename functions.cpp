@@ -392,20 +392,13 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
 */
 void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame){
     
-    Mat cameraFrameDilated;
-    int morph_size = 17;
-    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
-    dilate(cameraFrame, cameraFrameDilated, element);
-    inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
     UMat tmp1, tmp2;
     visu.convertTo(visu, CV_32F);
-    maxFrame.convertTo(maxFrame, CV_32F);
-    minFrame.convertTo(minFrame, CV_32F);
     subtract(visu, minFrame, tmp1);
     subtract(maxFrame, minFrame, tmp2);
     divide(tmp1, tmp2, visu);
     visu.convertTo(visu, CV_8U, 255);
-    imwrite("/home/ljp/Desktop/visu.pgm", visu); 
+    
 }
 
 /**
@@ -413,16 +406,23 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
   * @param vector<String> files: vector of path to the image of the sequence.
   * @return vector<UMat>: {maximum frame, minimumFrame}.
 */
-vector<UMat> MinMaxFrame(vector<String> files) {
+vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
+	
 
     UMat minFrame;
     imread(files[0], IMREAD_GRAYSCALE).copyTo(minFrame);
+    minFrame.setTo(255); // Set to maximal value possible
+    minFrame.convertTo(minFrame, CV_32F);
+
     UMat maxFrame;
     imread(files[0], IMREAD_GRAYSCALE).copyTo(maxFrame);
-    minFrame.setTo(255);
+    maxFrame.setTo(0); // Set to maximal value possible
+    maxFrame.convertTo(maxFrame, CV_32F);
+
     UMat img0;
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     img0.convertTo(img0, CV_32F);
+
     UMat tmp;
     Mat H;
     UMat binary;
@@ -435,24 +435,24 @@ vector<UMat> MinMaxFrame(vector<String> files) {
         Point2d shift = phaseCorrelate(tmp, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
         warpAffine(tmp, tmp, H, tmp.size());
-    	tmp.convertTo(tmp, CV_8U);
 	
 	//Image of maximum
     	cv::max(tmp, maxFrame, maxFrame);
     	
 	// Image of minimum
-    	threshold(tmp, binary, 110, 255, CV_THRESH_BINARY_INV);
-	UMat cameraFrameDilated;
-    	int morph_size = 21;
+
+	// Hide the fish
+    	background.convertTo(background, CV_32F);
+	subtract(background, tmp, binary);
+    	threshold(binary, binary, 40, 255, CV_THRESH_BINARY);
+    	int morph_size = 17;
     	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
-    	dilate(tmp, cameraFrameDilated, element );
-	bitwise_or(tmp, cameraFrameDilated,tmp);
+    	dilate(binary, binary, element);
+    	binary.convertTo(binary, CV_8U);
+	tmp.setTo(255, binary);
 	cv::min(tmp, minFrame, minFrame);
 
-//	imwrite("/home/ljp/Desktop/test.pgm", minFrame);
     }
-    imwrite("/home/ljp/Desktop/min.pgm", minFrame);
-    imwrite("/home/ljp/Desktop/max.pgm", maxFrame);
     return {maxFrame, minFrame};
 }
 
@@ -464,7 +464,7 @@ vector<UMat> MinMaxFrame(vector<String> files) {
     * @param int maxSize: maximal size of the object
   * @return vector<vector<Point3f>>: {head parameters, tail parameters, global parameter}, {head/tail parameters} = {x, y, orientation}, {global parameter} = {curvature, 0, 0}
 */
-vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMat visu){
+vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMat& visu){
 
     vector<vector<Point> > contours;
     vector<Point3f> positionHead;
@@ -481,6 +481,10 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
     Point2f radiusCurv;
     double objectLen;
 
+/*    	int morph_size = 9;
+    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
+dilate(frame, frame, element);
+*/
     findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
 
@@ -574,6 +578,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
                 }
                 curv = pMax;
 
+/*
                 // Concentration around the head
                 double concentration;
                 int left, right, top, bottom;
@@ -604,7 +609,13 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
                 catch(...){
                     concentration = NAN;
                 }
+*/
+		double concentration = 0;
 
+		for(int contourPoint = 0; contourPoint < contours[i].size(); contourPoint++){
+			concentration = visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) * (visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) > concentration);
+		}
+		drawContours(visu, contours, i, Scalar(concentration), CV_FILLED, 8);
 
 
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
@@ -630,7 +641,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
   * @param vector<Point3f> prevPos: sorted vector of object parameters,vector of points (x, y, orientation).
     * @param vector<Point3f> pos: non-sorted vector of object parameters,vector of points (x, y, orientation) that we want to sort accordingly to prevPos to identify each object.
     * @param double length: maximal displacement of an object between two frames.
-    * @param double angle: maximal difference angle of an object direction between two frames.
+   '/usr/RAID/Science/Project/Behavior/Dual/Data/Repulsion/AcideCitrique/' * @param double angle: maximal difference angle of an object direction between two frames.
     * @return vector<int>: the assignment vector of the new index position.
 */
 vector<int> CostFunc(vector<Point3f> prevPos, vector<Point3f> pos, const double LENGTH, const double ANGLE, const double WEIGHT, const double LO){
@@ -835,9 +846,11 @@ Rect AutoROI(UMat background){
 
 */
 void FillMargin(UMat& uFrame){
+cout << "Start" << endl;
     Mat frame = uFrame.getMat(ACCESS_RW);
     Rect innerROI(20, 20 , frame.cols - 40, frame.rows - 40);
 
+cout << "Start2" << endl;
     for(int row = 0; row < frame.rows; row++){
         for(int col = 0; col < frame.cols; col++){
             if ( col < innerROI.x ){ // Left side
@@ -874,7 +887,9 @@ void FillMargin(UMat& uFrame){
         }
     }
     GaussianBlur(frame, frame, Size(5, 5), 0, 0);
-    frame.copyTo(uFrame);
+cout << "Start3" << endl;
+    uFrame = frame.getUMat(ACCESS_RW);
+cout << "Start4" << endl;
 }
 
 

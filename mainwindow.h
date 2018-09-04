@@ -117,6 +117,7 @@ private:
     UMat background;
     UMat minFrame;
     UMat maxFrame;
+    UMat fond; // In testing
     Mat concentrationImg;
     vector<vector<Point> > memory;
     vector<string> pathList;
