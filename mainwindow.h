@@ -119,6 +119,7 @@ private:
     UMat maxFrame;
     UMat fond; // In testing
     Mat concentrationImg;
+    vector<UMat> buffer; // In testing
     vector<vector<Point> > memory;
     vector<string> pathList;
     vector<Point3f> colorMap;

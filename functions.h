@@ -36,6 +36,7 @@
 #include <math.h>
 #include <numeric>
 #include <stdlib.h>
+#include <algorithm>
 
 using namespace cv;
 using namespace std;
@@ -73,7 +74,7 @@ void Binarisation(UMat frame, char backgroundColor, int value);
 void ConcentrationMap(Mat& visu, UMat cameraFrame);
 string Metadata(string name);
 
-void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame);
+void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame, vector<UMat>& buffer);
 
 vector<UMat> MinMaxFrame(vector<String> files, UMat background);
 

@@ -390,16 +390,34 @@ void ConcentrationMap(Mat& visu, UMat cameraFrame){
   *param UMat minFrame: temporal minimum
   *param UMat maxFrame : temporal maximum
 */
-void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame){
-    
-    UMat tmp1, tmp2;
+void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFrame, UMat maxFrame, vector<UMat>& buffer){
+
+    UMat tmp1, tmp2, frame;
     visu.convertTo(visu, CV_32F);
+
+
+    // Normalization operation
     subtract(visu, minFrame, tmp1);
     subtract(maxFrame, minFrame, tmp2);
     divide(tmp1, tmp2, visu);
-    visu.convertTo(visu, CV_8U, 255);
-    
+
+    // Temporal smoothing
+    int morph_size = 9;
+    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
+    dilate(cameraFrame, frame, element);
+    inpaint(visu, frame, visu, 6, INPAINT_NS);
+    GaussianBlur(visu, visu, Size(7, 7), 0, 0);
+    buffer.push_back(visu);
+    buffer.erase(buffer.begin());
+    UMat meanFrame = UMat::zeros(visu.size(), CV_32F);
+    for (auto const& i: buffer){
+      accumulate(i, meanFrame);
+    }
+    double coeff = 255./float(buffer.size());
+    meanFrame.convertTo(visu, CV_8U, coeff, 0); 
 }
+
+
 
 /**
   * @MinMaxFrame computes the image of the maxima and the image of minima for each pixel.
@@ -430,28 +448,31 @@ vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
     for(unsigned int i = 0; i < files.size(); i++){
 
 	// Registration
-        imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
-        tmp.convertTo(tmp, CV_32F);
-        Point2d shift = phaseCorrelate(tmp, img0);
-        H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
-        warpAffine(tmp, tmp, H, tmp.size());
+      imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
+      tmp.convertTo(tmp, CV_32F);
+      Point2d shift = phaseCorrelate(tmp, img0);
+      H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
+      warpAffine(tmp, tmp, H, tmp.size());
 	
+    GaussianBlur(tmp, tmp, Size(7, 7), 0, 0);
 	//Image of maximum
-    	cv::max(tmp, maxFrame, maxFrame);
+      cv::max(tmp, maxFrame, maxFrame);
     	
 	// Image of minimum
 
 	// Hide the fish
     	background.convertTo(background, CV_32F);
-	subtract(background, tmp, binary);
-    	threshold(binary, binary, 40, 255, CV_THRESH_BINARY);
-    	int morph_size = 17;
+	    subtract(background, tmp, binary);
+    	threshold(binary, binary, 10, 255, CV_THRESH_BINARY);
+    	int morph_size = 7;
     	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
     	dilate(binary, binary, element);
     	binary.convertTo(binary, CV_8U);
-	tmp.setTo(255, binary);
-	cv::min(tmp, minFrame, minFrame);
+      tmp.setTo(255, binary); // To test
+      cv::min(tmp, minFrame, minFrame);
 
+      imwrite("/home/ljp/Desktop/min.pgm", minFrame);
+      imwrite("/home/ljp/Desktop/max.pgm", maxFrame);
     }
     return {maxFrame, minFrame};
 }
@@ -481,10 +502,10 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
     Point2f radiusCurv;
     double objectLen;
 
-/*    	int morph_size = 9;
+    	int morph_size = 7;
     	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
 dilate(frame, frame, element);
-*/
+
     findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
 
@@ -578,7 +599,6 @@ dilate(frame, frame, element);
                 }
                 curv = pMax;
 
-/*
                 // Concentration around the head
                 double concentration;
                 int left, right, top, bottom;
@@ -609,12 +629,14 @@ dilate(frame, frame, element);
                 catch(...){
                     concentration = NAN;
                 }
-*/
-		double concentration = 0;
-
+    vector<int> distribution;
 		for(int contourPoint = 0; contourPoint < contours[i].size(); contourPoint++){
-			concentration = visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) * (visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) > concentration);
+			distribution.push_back( visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) );
 		}
+
+    sort(distribution.begin(), distribution.end());
+    int index = .95*distribution.size();
+    concentration = distribution.at(index);
 		drawContours(visu, contours, i, Scalar(concentration), CV_FILLED, 8);
 
 

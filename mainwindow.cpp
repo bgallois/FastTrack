@@ -595,16 +595,16 @@ void MainWindow::Go(){
             string name = *a;
             progressBar ->setRange(0, files.size());
             background = BackgroundExtraction(files, nBackground);
-	    vector<UMat> minMaxVect;
-	    minMaxVect = MinMaxFrame(files, background);
-	    minFrame = minMaxVect.at(1);
-	    maxFrame = minMaxVect.at(0);
+            vector<UMat> minMaxVect;
+            minMaxVect = MinMaxFrame(files, background);
+            minFrame = minMaxVect.at(1);
+            maxFrame = minMaxVect.at(0);
             vector<vector<Point> > tmp(NUMBER, vector<Point>());
             memory = tmp;
             colorMap = Color(NUMBER);
             ROI = AutoROI(background);
             imread(name, IMREAD_GRAYSCALE).copyTo(img0);
-            
+            buffer = {img0, img0, img0, img0, img0, img0, img0, img0, img0, img0};
             
 
 
@@ -623,45 +623,27 @@ void MainWindow::Go(){
         string metadata = Metadata(name);
 
         visu = cameraFrame.clone();
-	UMat img0;
-	imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
         Registration(background, visu);
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
-	ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame);
-    	int morph_size = 9;
-	UMat cameraFrameDilated;
-    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
-	dilate(cameraFrame, cameraFrameDilated, element);
-	inpaint(visu, cameraFrameDilated, visu, 6, INPAINT_NS);
 
-	//In testing to subtract static image after normalization
-	if (im == 0){
-		fond = visu.clone();
-	}
-	if (im < 2000 && im > 1){
-    		visu.convertTo(visu, CV_32F);
-    		fond.convertTo(fond, CV_32F);
-		add(visu, fond, fond);
-    		visu.convertTo(visu, CV_8U);
-    		fond.convertTo(fond, CV_8U, 0.5);
-	
-	}
-	subtract(fond, visu, visu);
-	///////
-	
 
+
+	imwrite("/home/ljp/Desktop/visu.pgm", visu);
+	ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame, buffer);
+	imwrite("/home/ljp/Desktop/visuAfter.pgm", visu);
+
+
+
+        FillMargin(visu);
+	
 	cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
-        FillMargin(visu);
-	GaussianBlur(visu, visu, Size(7, 7), 0, 0);
-	normalize(visu, visu, 255, 0, NORM_MINMAX);
-	
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
 
-	string imgName = "/home/ljp/Desktop/concentration/" + to_string(im) + ".pgm";
-	imwrite(imgName, visu);
+//	string imgName = "/home/ljp/Desktop/concentration/" + to_string(im) + ".pgm";
+//	imwrite(imgName, visu);
 
         if(im == 0){ // First frame initialization
 
