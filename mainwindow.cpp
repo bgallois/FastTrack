@@ -627,23 +627,12 @@ void MainWindow::Go(){
         subtract(background, cameraFrame, cameraFrame);
         Binarisation(cameraFrame, 'b', threshValue);
 
-
-
-	imwrite("/home/ljp/Desktop/visu.pgm", visu);
-	ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame, buffer);
-	imwrite("/home/ljp/Desktop/visuAfter.pgm", visu);
-
-
-
-        FillMargin(visu);
-	
-	cameraFrame = cameraFrame(ROI);
+        ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame, buffer);
+        cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
+        FillMargin(visu);
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
-
-//	string imgName = "/home/ljp/Desktop/concentration/" + to_string(im) + ".pgm";
-//	imwrite(imgName, visu);
 
         if(im == 0){ // First frame initialization
 

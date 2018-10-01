@@ -402,10 +402,10 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
     divide(tmp1, tmp2, visu);
 
     // Temporal smoothing
-    int morph_size = 9;
+    int morph_size = 19;
     Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
     dilate(cameraFrame, frame, element);
-    inpaint(visu, frame, visu, 6, INPAINT_NS);
+    inpaint(visu, frame, visu, 9, INPAINT_NS);
     GaussianBlur(visu, visu, Size(7, 7), 0, 0);
     buffer.push_back(visu);
     buffer.erase(buffer.begin());
@@ -414,7 +414,7 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
       accumulate(i, meanFrame);
     }
     double coeff = 255./float(buffer.size());
-    meanFrame.convertTo(visu, CV_8U, coeff, 0); 
+    meanFrame.convertTo(visu, CV_8U, coeff); 
 }
 
 
@@ -470,9 +470,6 @@ vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
     	binary.convertTo(binary, CV_8U);
       tmp.setTo(255, binary); // To test
       cv::min(tmp, minFrame, minFrame);
-
-      imwrite("/home/ljp/Desktop/min.pgm", minFrame);
-      imwrite("/home/ljp/Desktop/max.pgm", maxFrame);
     }
     return {maxFrame, minFrame};
 }
@@ -502,9 +499,9 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
     Point2f radiusCurv;
     double objectLen;
 
-    	int morph_size = 7;
-    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
-dilate(frame, frame, element);
+    	//int morph_size = 9;
+    	//Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
+      //dilate(frame, frame, element);
 
     findContours(frame, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 
@@ -579,12 +576,6 @@ dilate(frame, frame, element);
 
 
 
-                //Curvature
-                /*double curv = 1./1e-16;
-                radiusCurv = CurvatureCenter(Point3f(xTail, yTail, angleTail), Point3f(xHead, yHead, angleHead));
-                if(radiusCurv.x != NAN){ //
-                    curv = Curvature(radiusCurv, RoiFull.getMat(ACCESS_READ));
-                }*/
 
                 //Interface x-position
                 double curv= 0;
@@ -599,45 +590,23 @@ dilate(frame, frame, element);
                 }
                 curv = pMax;
 
-                // Concentration around the head
-                double concentration;
-                int left, right, top, bottom;
-                left = xHead - 10;
-                right = xHead + 10;
-                top = yHead - 10;
-                bottom = yHead + 10;
+              //visu.setTo(255);
+              vector<double> distribution;
+              double concentration;
+              for(int contourPoint = 0; contourPoint < contours[i].size(); contourPoint++){
+                distribution.push_back( visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].y, contours[i][contourPoint].x) );
+              }
 
-                try{
-                    if(left < 0){
-                        left = xHead;
-                    }
-                    if(right > visu.cols){
-                        right = xHead;
-                    }
-                    if(top < 0){
-                        top = yHead;
-                    }
-                    if(bottom > visu.rows){
-                        bottom = yHead;
-                    }
-
-                    Rect RoiConcentration(left, top, right - left, bottom - top);
-
-                    UMat RoiVisu = visu(RoiConcentration);
-                    concentration = mean(RoiVisu)[0];
-                }
-                catch(...){
-                    concentration = NAN;
-                }
-    vector<int> distribution;
-		for(int contourPoint = 0; contourPoint < contours[i].size(); contourPoint++){
-			distribution.push_back( visu.getMat(ACCESS_READ).at<uchar>(contours[i][contourPoint].x, contours[i][contourPoint].y) );
-		}
-
-    sort(distribution.begin(), distribution.end());
-    int index = .95*distribution.size();
-    concentration = distribution.at(index);
-		drawContours(visu, contours, i, Scalar(concentration), CV_FILLED, 8);
+              sort(distribution.begin(), distribution.end());
+              int index = 0.05*distribution.size();
+              /*concentration = 0;
+              for (auto const& ij: distribution){
+                concentration += ij;
+              }*/
+              concentration = distribution.at(index);
+              imwrite("/home/ljp/Desktop/test.png", visu);
+              cout << distribution.size() << '\t' << concentration << endl;
+              drawContours(visu, contours, i, Scalar(concentration), CV_FILLED, 8);
 
 
                 positionHead.push_back(Point3f(xHead, yHead, angleHead));
@@ -868,11 +837,9 @@ Rect AutoROI(UMat background){
 
 */
 void FillMargin(UMat& uFrame){
-cout << "Start" << endl;
     Mat frame = uFrame.getMat(ACCESS_RW);
     Rect innerROI(20, 20 , frame.cols - 40, frame.rows - 40);
 
-cout << "Start2" << endl;
     for(int row = 0; row < frame.rows; row++){
         for(int col = 0; col < frame.cols; col++){
             if ( col < innerROI.x ){ // Left side
@@ -909,9 +876,7 @@ cout << "Start2" << endl;
         }
     }
     GaussianBlur(frame, frame, Size(5, 5), 0, 0);
-cout << "Start3" << endl;
     uFrame = frame.getUMat(ACCESS_RW);
-cout << "Start4" << endl;
 }
 
 
