@@ -604,7 +604,7 @@ void MainWindow::Go(){
             colorMap = Color(NUMBER);
             ROI = AutoROI(background);
             imread(name, IMREAD_GRAYSCALE).copyTo(img0);
-            buffer = {img0, img0, img0, img0, img0, img0, img0, img0, img0, img0};
+            buffer = {img0, img0, img0, img0, img0};
             
 
 
@@ -616,7 +616,6 @@ void MainWindow::Go(){
 
         
         string name = *a;
-
 
         imread(name, IMREAD_GRAYSCALE).copyTo(cameraFrame);
         Registration(background, cameraFrame);
@@ -630,10 +629,11 @@ void MainWindow::Go(){
         ConcentrationMapNormalizedByPixel(visu, cameraFrame, minFrame, maxFrame, buffer);
         cameraFrame = cameraFrame(ROI);
         visu = visu(ROI);
-        FillMargin(visu);
+        //FillMargin(visu);
         // Position computation
         out = ObjectPosition(cameraFrame, MINAREA, MAXAREA, visu);
-
+        string imgName = "/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationMap/" + to_string(im) + ".png";
+        imwrite(imgName, visu);
         if(im == 0){ // First frame initialization
 
             if(out.at(0).size() < NUMBER && out.at(0).size() != 0){
@@ -654,6 +654,7 @@ void MainWindow::Go(){
                     out.at(3).push_back(Point3f(0, 0, 0));
                 }
 
+                outPrev = out;
 
 
             }
@@ -789,7 +790,7 @@ void MainWindow::Display(UMat visu, UMat cameraFrame){
     }
 
     else if (normal->isChecked() && !binary->isChecked()){
-        cvtColor(visu,visu,CV_BGR2RGB);
+       // cvtColor(visu,visu,CV_BGR2RGB);
 
         display->setPixmap(QPixmap::fromImage(QImage(visu.getMat(cv::ACCESS_READ).data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->clear();
@@ -803,7 +804,7 @@ void MainWindow::Display(UMat visu, UMat cameraFrame){
 
 
     else if (normal->isChecked() && binary->isChecked()){ // Display the original image and the binary mask
-        cvtColor(visu,visu,CV_BGR2RGB);
+        //cvtColor(visu,visu,CV_BGR2RGB);
         display->setPixmap(QPixmap::fromImage(QImage(visu.getMat(cv::ACCESS_READ).data, visu.cols, visu.rows, visu.step, QImage::Format_RGB888)).scaled(w, h, Qt::KeepAspectRatio));
         display2->setPixmap(QPixmap::fromImage(QImage(cameraFrame.getMat(cv::ACCESS_READ).data, cameraFrame.cols, cameraFrame.rows, cameraFrame.step, QImage::Format_Grayscale8)).scaled(w2, h2, Qt::KeepAspectRatio));
     }
