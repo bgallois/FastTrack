@@ -10,7 +10,7 @@
 #include <functions.h>
 #include <opencv2/core/ocl.hpp>
 #include <ctime>
-
+#include <QDir>
 
 
 
@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowState(Qt::WindowMaximized);
     setWindowTitle("Fishy Tracking");
     statusBar()->showMessage(tr("Ready"));
+
+    QDir::setCurrent(QCoreApplication::applicationDirPath());
 
     cv::ocl::setUseOpenCL(true);
     GPU = " on CPU";
