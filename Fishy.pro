@@ -11,6 +11,14 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Fishy
 TEMPLATE = app
 
+DESTDIR=build
+OBJECTS_DIR=build
+MOC_DIR=build
+
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS_RELEASE += -O3
+
+QMAKE_LFLAGS_RELEASE -= -O1
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -30,11 +38,11 @@ SOURCES += \
         functions.cpp \
         Hungarian.cpp
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -O3 -fopenmp
 
 
 INCLUDEPATH += /usr/include/opencv
-LIBS += -L /usr/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lopencv_video -lopencv_photo
+LIBS += -L /usr/lib -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio -lopencv_video -lopencv_photo -fopenmp
 
 HEADERS += \
         mainwindow.h\

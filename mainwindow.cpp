@@ -33,9 +33,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
     cv::ocl::setUseOpenCL(true);
     GPU = " on CPU";
-    if (cv::ocl::haveOpenCL()){
-            GPU = " on GPU";
-        }
+    cv::ocl::Context context;
+    if (context.create(cv::ocl::Device::TYPE_GPU)){
+      GPU = " on GPU";
+      cout << context.ndevices() << " GPU devices are detected." << endl;
+      for (int i = 0; i < context.ndevices(); i++){
+          cv::ocl::Device device = context.device(i);
+          cout << "name                 : " << device.name() << endl;
+          cout << "available            : " << device.available() << endl;
+          cout << "imageSupport         : " << device.imageSupport() << endl;
+          cout << "OpenCL_C_Version     : " << device.OpenCL_C_Version() << endl;
+          cout << endl;
+      }
+    }
+    else{
+      cout << "No GPU" << '\n';
+    }
     // Setup style
     QFile stylesheet(":/darkTheme.qss");
 
@@ -681,7 +694,7 @@ void MainWindow::Go(){
 
 
         // Visualization & saving
-       applyColorMap(visu, visu, COLORMAP_JET);
+       //applyColorMap(visu, visu, COLORMAP_JET);
        for(unsigned int l = 0; l < out.at(0).size(); l++){
             Point3f coord;
             coord = out.at(spot).at(l);

@@ -27,6 +27,7 @@
 
 #include "functions.h"
 #include "Hungarian.h"
+#include <omp.h>
 
 using namespace cv;
 using namespace std;
@@ -280,29 +281,33 @@ UMat BackgroundExtraction(vector<String> files, double n){
 
     UMat background;
     UMat img0;
-    imread(files[999], IMREAD_GRAYSCALE).copyTo(background);
+    imread(files[0], IMREAD_GRAYSCALE).copyTo(background);
+    background.setTo(0);
     imread(files[0], IMREAD_GRAYSCALE).copyTo(img0);
     background.convertTo(background, CV_32F);
     img0.convertTo(img0, CV_32F);
-    int step = 4000;
+    int step = files.size()/n;
     UMat tmp;
+    UMat cameraFrameReg;
     Mat H;
-    UMat identity = UMat::ones(background.rows, background.cols, CV_32F);
+    double count = 0;
 
-    for(unsigned int i = 1000; i < 4000; i++){
+	for(unsigned int i = 0; i < files.size(); i += step){
         imread(files[i], IMREAD_GRAYSCALE).copyTo(tmp);
         tmp.convertTo(tmp, CV_32F);
-        Point2d shift = phaseCorrelate(tmp, img0);
+        cameraFrameReg = tmp;
+				img0 = img0;
+        Point2d shift = phaseCorrelate(cameraFrameReg, img0);
         H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
-        warpAffine(tmp, tmp, H, tmp.size());
-        accumulate(tmp, background);
-    }
-    multiply(background, identity, background, 1./(3001.));
-    background.convertTo(background, CV_8U);
+				warpAffine(tmp, tmp, H, tmp.size());
+				accumulate(tmp, background);
+        count += 1;
+	}
 
-    return background;
+    background.convertTo(background, CV_8U, 1./count);
+
+	return background;
 }
-
 
 
 
@@ -400,8 +405,10 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
     subtract(maxFrame, minFrame, tmp2);
     divide(tmp1, tmp2, visu);
 
+
+
     // Temporal smoothing
-    int morph_size = 19;
+    /*int morph_size = 19;
     Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));    	
     dilate(cameraFrame, frame, element);
     inpaint(visu, frame, visu, 9, INPAINT_NS);
@@ -413,7 +420,8 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
       accumulate(i, meanFrame);
     }
     double coeff = 255./float(buffer.size());
-    meanFrame.convertTo(visu, CV_8U, coeff); 
+    meanFrame.convertTo(visu, CV_8U, coeff); */
+    visu.convertTo(visu, CV_8U, 255);
 }
 
 
@@ -426,6 +434,7 @@ void ConcentrationMapNormalizedByPixel(UMat& visu, UMat cameraFrame, UMat minFra
 vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
 	
 
+    imwrite("/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationTest/Mis/back.pgm", background);
     UMat minFrame;
     imread(files[0], IMREAD_GRAYSCALE).copyTo(minFrame);
     minFrame.setTo(255); // Set to maximal value possible
@@ -443,6 +452,9 @@ vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
     UMat tmp;
     Mat H;
     UMat binary;
+    vector<vector<Point>> contours;
+    int morph_size = 5;
+    Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
 
     for(unsigned int i = 0; i < files.size(); i++){
 
@@ -452,8 +464,7 @@ vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
       Point2d shift = phaseCorrelate(tmp, img0);
       H = (Mat_<float>(2, 3) << 1.0, 0.0, shift.x, 0.0, 1.0, shift.y);
       warpAffine(tmp, tmp, H, tmp.size());
-	
-    GaussianBlur(tmp, tmp, Size(7, 7), 0, 0);
+      GaussianBlur(tmp, tmp, Size(7, 7), 0, 0);
 	//Image of maximum
       cv::max(tmp, maxFrame, maxFrame);
     	
@@ -461,15 +472,34 @@ vector<UMat> MinMaxFrame(vector<String> files, UMat background) {
 
 	// Hide the fish
     	background.convertTo(background, CV_32F);
-	    subtract(background, tmp, binary);
-    	threshold(binary, binary, 10, 255, CV_THRESH_BINARY);
-    	int morph_size = 7;
-    	Mat element = getStructuringElement(MORPH_ELLIPSE,  Size(2*morph_size + 1, 2*morph_size + 1), Point( morph_size, morph_size ));
-    	dilate(binary, binary, element);
+	    absdiff(background, tmp, binary);
+    	threshold(binary, binary, 15, 255, CV_THRESH_BINARY);
     	binary.convertTo(binary, CV_8U);
+        imwrite("/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationTest/Mis/binary.pgm", binary);
+
+  // To avoid artefact when dilating contours by static thing other that the fish
+      //findContours(binary, contours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+      //for (unsigned int j = 0; j < contours.size(); j++){
+        //if(contourArea(contours[j]) < 500 && contours.at(j).at(0).x > 150){ //To formalize with parameter 
+        //  drawContours(binary, contours, j, Scalar(0, 0, 0), CV_FILLED, 8);
+          //}
+
+    	dilate(binary, binary, element);
       tmp.setTo(255, binary); // To test
       cv::min(tmp, minFrame, minFrame);
+        imwrite("/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationTest/Mis/min.pgm", minFrame);
     }
+
+    // In testing
+	    /*subtract(background, minFrame, binary);
+    	threshold(binary, binary, 65, 255, CV_THRESH_BINARY);
+    	dilate(binary, binary, element);
+    	binary.convertTo(binary, CV_8U);
+      inpaint(minFrame, binary, minFrame, 2, INPAINT_NS);
+*/
+
+        imwrite("/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationTest/Mis/max.pgm", maxFrame);
+        imwrite("/usr/RAID/Science/Project/Behavior/Dual/Movies/ConcentrationTest/Mis/min.pgm", minFrame);
     return {maxFrame, minFrame};
 }
 
@@ -498,6 +528,7 @@ vector<vector<Point3f>> ObjectPosition(UMat frame, int minSize, int maxSize, UMa
     Point2f radiusCurv;
     double objectLen;
     UMat display;
+    GaussianBlur(visu, visu, Size(3, 3), 0, 0);
     cvtColor(visu, display, cv::COLOR_GRAY2RGB);
 
 
@@ -635,22 +666,26 @@ std::vector<int> co = {95, 0, 0, 97, 0, 0, 98, 0, 0, 100, 0, 0, 101, 0, 0, 103, 
                 }*/
 
                 int maxSearch = 50;
-                double concentration;
-                double count = 0;
+                int concentration = 0;
+                int count = 0;
+                #pragma omp parallel for
                 for(int xSearch = int(xHead) - maxSearch; xSearch < int(xHead) + maxSearch; xSearch++){
                   for(int ySearch = int(yHead) - maxSearch; ySearch < int(yHead) + maxSearch; ySearch++){
                     if ( xSearch > 0 && ySearch > 0 && xSearch < visu.cols &&  ySearch < visu.rows ){
                       double dist = pointPolygonTest(contours.at(i), Point2f(xSearch, ySearch), true);
-                      if (dist > 0 && dist < 10) {
+                      if (dist < -2 && dist > -12) {
+                        #pragma omp critical
+                        {
                         concentration +=   visu.getMat(ACCESS_READ).at<uchar>(ySearch, xSearch);
-                        display.getMat(ACCESS_WRITE).at<Vec3b>(ySearch, xSearch) = 255;
+                        //display.getMat(ACCESS_WRITE).at<Vec3b>(ySearch, xSearch) = 255;
                         count += 1;
+                        }
                       }
                     }
                   }
                 }
-                concentration/= count;
-              //drawContours(display, contours, i, Scalar(co.at(concentration*3), co.at(concentration*3+1), co.at(concentration*3+2)), CV_FILLED, 8);
+                (count != 0) ? concentration/= count : concentration = 0;
+              drawContours(display, contours, i, Scalar(co.at(concentration*3), co.at(concentration*3+1), co.at(concentration*3+2)), CV_FILLED, 8);
 
 
 
