@@ -8,10 +8,6 @@ Before contributing to Fast Track, make sure to have a working environment of de
 
 ## Contributing
 
-### Create an account
-
-To contribute to Fast Track, first, you have to create an [account](https://git.benjamin-gallois.fr).
-
 ### Create a branch
 
 Before any work can be done, you have to create a new branch. If you are working on a new feature, branch the dev branch. For a bug fix, branch the master branch.

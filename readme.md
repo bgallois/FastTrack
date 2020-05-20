@@ -1,5 +1,7 @@
 # Fast Track
 
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/fasttracksh) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Website](https://img.shields.io/website?down_color=red&down_message=offline&style=plastic&up_color=green&up_message=online&url=http%3A%2F%2Fwww.fasttrack.sh)]
+
 Fast Track is a cross-platform application designed to track multiple objects in video recording. Stable versions of the software are available for Linux, Mac and Windows.
 
 Two main features are implemented in the software:
@@ -42,5 +44,4 @@ cd fasttrack
 - Website: http://www.fasttrack.sh/
 - User manual: http://www.fasttrack.sh/UserManual/docs/intro.html
 - Developer guide: http://www.fasttrack.sh/API/index.html
-- Bug tracker: http://assistance.fasttrack.sh/
 

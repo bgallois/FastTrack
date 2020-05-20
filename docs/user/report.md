@@ -5,7 +5,7 @@ sidebar_label: Report a bug
 ---
 
 FastTrack is open-source software and it needs your help!
-If you encounter a bug or abnormal behaviors please report it by email at benjamin.gallois@fasttrack.sh following this blueprint:
+If you encounter a bug or abnormal behaviors please report it by email at benjamin.gallois@fasttrack.sh following this blueprint or open an issue on [github](https://github.com/bgallois/FastTrack/issues):
 
 	Recipients: benjamin.gallois@fasttrack.sh  
 	Subject: [report] One word description  
