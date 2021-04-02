@@ -398,7 +398,7 @@ void Tracking::binarisation(UMat &frame, char backgroundColor, int value) {
   * @param[in] maxSize: The maximal size of an object.
   * @return All the parameters of all the objects formated as follows: one vector, inside of this vector, four vectors for parameters of the head, tail, body and features with number of object size. {  { Point(xHead, yHead, thetaHead), ...}, Point({xTail, yTail, thetaHead), ...}, {Point(xBody, yBody, thetaBody), ...}, {Point(curvature, 0, 0), ...}}
 */
-vector<vector<Point3d>> Tracking::objectPosition(const UMat &frame, int minSize, int maxSize) {
+pair<vector<vector<Point3d>>, vector<Mat>> Tracking::objectPosition(const UMat &frame, const UMat &grayFrame, int minSize, int maxSize) {
   vector<vector<Point>> contours;
   vector<Point3d> positionHead;
   vector<Point3d> positionTail;
@@ -407,6 +407,7 @@ vector<vector<Point3d>> Tracking::objectPosition(const UMat &frame, int minSize,
   vector<Point3d> ellipseTail;
   vector<Point3d> ellipseBody;
   vector<Point3d> globalParam;
+  vector<Mat> grayParam;
   UMat dst;
   Rect roiFull, bbox;
   UMat RoiFull, RoiHead, RoiTail, rotate;
@@ -426,6 +427,7 @@ vector<vector<Point3d>> Tracking::objectPosition(const UMat &frame, int minSize,
   ellipseTail.reserve(reserve);
   ellipseBody.reserve(reserve);
   globalParam.reserve(reserve);
+  grayParam.reserve(reserve);
 
   for (size_t i = 0; i < contours.size(); i++) {
     double a = contourArea(contours[i]);
@@ -518,13 +520,24 @@ vector<vector<Point3d>> Tracking::objectPosition(const UMat &frame, int minSize,
       ellipseBody.push_back(Point3d(parameter[3], parameter[4], pow(1 - (parameter[4] * parameter[4]) / (parameter[3] * parameter[3]), 0.5)));
 
       globalParam.push_back(Point3d(curv, a, arcLength(contours[i], true)));
+
+      // Grayscale image
+      Mat img = grayFrame.getMat(ACCESS_READ);
+      Mat hist;
+      int histSize = 256;
+      float range[] = {0, 256};
+      const float *histRange = {range};
+      calcHist(&img, 1, 0, dst, hist, 1, &histSize, &histRange, true, false);
+      grayParam.push_back(hist);
     }
 
     else if (contourArea(contours[i]) >= maxSize && contourArea(contours[i]) < 3 * maxSize) {
     }
   }
 
-  vector<vector<Point3d>> out = {positionHead, positionTail, positionFull, globalParam, ellipseHead, ellipseTail, ellipseBody};
+  pair<vector<vector<Point3d>>, vector<Mat>> out;
+  out.first = {positionHead, positionTail, positionFull, globalParam, ellipseHead, ellipseTail, ellipseBody};
+  out.second = grayParam;
   return out;
 }
 
@@ -537,7 +550,7 @@ vector<vector<Point3d>> Tracking::objectPosition(const UMat &frame, int minSize,
   * @param[in] LO The maximal assignment distance in pixels.
   * @return The assignment vector containing the new index position to sort the pos vector. 
 */
-vector<int> Tracking::costFunc(const vector<vector<Point3d>> &prevPos, const vector<vector<Point3d>> &pos, double LENGTH, double ANGLE, double LO, double AREA, double PERIMETER) {
+vector<int> Tracking::costFunc(const vector<vector<Point3d>> &prevPos, const vector<vector<Point3d>> &pos, double LENGTH, double ANGLE, double LO, double AREA, double PERIMETER, const vector<Mat> &prevGray, const vector<Mat> &gray) {
   int n = static_cast<int>(prevPos[0].size());
   int m = static_cast<int>(pos[0].size());
   vector<int> assignment;
@@ -559,9 +572,14 @@ vector<int> Tracking::costFunc(const vector<vector<Point3d>> &prevPos, const vec
         double angleDiff = abs(angleDifference(prevCoord.z, coord.z));
         double areaDiff = abs(prevData.y - data.y);
         double perimeterDiff = abs(prevData.z - data.z);
+
+        double histDiff = 1;
+        if (!prevGray.empty() && !gray.empty()) {
+          histDiff = compareHist(prevGray[i], gray[j], HISTCMP_CORREL);
+        }
         double c = -1;
         if (distanceDiff < LO) {
-          c = divide(distanceDiff, LENGTH) + divide(angleDiff, ANGLE) + divide(areaDiff, AREA) + divide(perimeterDiff, PERIMETER);
+          c = divide(distanceDiff, LENGTH) + divide(angleDiff, ANGLE) + divide(areaDiff, AREA) + divide(perimeterDiff, PERIMETER) + (1 - histDiff);
           costMatrix[i][j] = c;
           distances.push_back({i, j});
         }
@@ -612,8 +630,9 @@ vector<int> Tracking::findOcclusion(vector<int> assignment) {
   * @param[in] id The vector with the id of the objects.
   * @return The sorted vector.
 */
-vector<Point3d> Tracking::reassignment(const vector<Point3d> &past, const vector<Point3d> &input, const vector<int> &assignment) {
-  vector<Point3d> tmp = past;
+template <typename T, typename A>
+vector<T, A> Tracking::reassignment(const vector<T, A> &past, const vector<T, A> &input, const vector<int> &assignment) {
+  vector<T, A> tmp = past;
 
   // Reassignes matched object
   for (unsigned int i = 0; i < past.size(); i++) {
@@ -641,15 +660,15 @@ vector<Point3d> Tracking::reassignment(const vector<Point3d> &past, const vector
 }
 
 /**
-  * @brief Cleans the data if an object is lost more than a certain time.
+  * @brief Reset the lost counter.
   * @param[in] occluded The vector with the index of object missing in the current image.
   * @param[in] input The vector at current image of size m <= n to be sorted.
   * @param[in] lostCounter The vector with the number of times each objects are lost consecutively.
   * @param[in] id The vector with the id of the objects.
-  * @param[in] param_maximalTime 
+  * @param[in] param_maximalTime
   * @return The sorted vector.
 */
-void Tracking::cleaning(const vector<int> &occluded, vector<int> &lostCounter, vector<int> &id, vector<vector<Point3d>> &input, double param_maximalTime) {
+void Tracking::cleaning(const vector<int> &occluded, vector<int> &lostCounter, vector<int> &id, const double param_maximalTime) {
   vector<int> counter(lostCounter.size(), 0);
 
   // Increment the lost counter
@@ -657,18 +676,40 @@ void Tracking::cleaning(const vector<int> &occluded, vector<int> &lostCounter, v
     counter[a] = lostCounter[a] + 1;
   }
 
-  // Cleans the data beginning at the start of the vector to keep index in place in the vectors
+  // Cleans the data beginning at the end of the vector to keep index in place in the vectors
   for (size_t i = counter.size(); i > 0; i--) {
     if (counter.at(i - 1) > param_maximalTime) {
       counter.erase(counter.begin() + i - 1);
       id.erase(id.begin() + i - 1);
-      for (size_t j = 0; j < input.size(); j++) {
-        input[j].erase(input[j].begin() + i - 1);
-      }
     }
   }
-
   lostCounter = counter;
+}
+
+/**
+  * @brief Clean the data if an object is lost more than a certain time.
+  * @param[in] occluded The vector with the index of object missing in the current image.
+  * @param[in] input The vector at current image of size m <= n to be sorted.
+  * @param[in] lostCounter The vector with the number of times each objects are lost consecutively.
+  * @param[in] id The vector with the id of the objects.
+  * @param[in] param_maximalTime 
+  * @return The sorted vector.
+*/
+template <typename T, typename A>
+void Tracking::cleaning(const vector<int> &occluded, const vector<int> &lostCounter, vector<T, A> &input, const double param_maximalTime) {
+  vector<int> counter(lostCounter.size(), 0);
+
+  // Increment the lost counter
+  for (auto &a : occluded) {
+    counter[a] = lostCounter[a] + 1;
+  }
+
+  // Cleans the data beginning at the end of the vector to keep index in place in the vectors
+  for (size_t i = counter.size(); i > 0; i--) {
+    if (counter.at(i - 1) > param_maximalTime) {
+      input.erase(input.begin() + i - 1);
+    }
+  }
 }
 
 /**
@@ -746,16 +787,17 @@ void Tracking::imageProcessing() {
       }
 
       // Detects the objects and extracts  parameters
-      m_out = objectPosition(m_binaryFrame, param_minArea, param_maxArea);
+      tie(m_out, m_outGray) = objectPosition(m_binaryFrame, m_visuFrame, param_minArea, param_maxArea);
 
       // Associates the objets with the previous image
-      vector<int> identity = costFunc(m_outPrev, m_out, param_len, param_angle, param_lo, param_area, param_perimeter);
+      vector<int> identity = costFunc(m_outPrev, m_out, param_len, param_angle, param_lo, param_area, param_perimeter, m_outGrayPrev, m_outGray);
       vector<int> occluded = findOcclusion(identity);
 
       // Reassignes the m_out vector regarding the identities of the objects
       for (size_t i = 0; i < m_out.size(); i++) {
         m_out[i] = reassignment(m_outPrev[i], m_out[i], identity);
       }
+      m_outGray = reassignment(m_outGrayPrev, m_outGray, identity);
 
       // Updates id and lost counter
       while (m_out[0].size() - m_id.size() != 0) {
@@ -781,8 +823,13 @@ void Tracking::imageProcessing() {
         }
       }
 
-      cleaning(occluded, m_lost, m_id, m_out, param_to);
+      for (size_t i = 0; i < m_out.size(); i++) {
+        cleaning(occluded, m_lost, m_out, param_to);
+      }
+      cleaning(occluded, m_lost, m_outGray, param_to);
+      cleaning(occluded, m_lost, m_id, param_to);  // Reset lost counter itself
       m_outPrev = m_out;
+      m_outGrayPrev = m_outGray;
       m_im++;
       emit(progress(m_im));
     }
@@ -894,7 +941,7 @@ void Tracking::startProcess() {
       m_visuFrame = m_visuFrame(m_ROI);
     }
 
-    m_out = objectPosition(m_binaryFrame, param_minArea, param_maxArea);
+    tie(m_out, m_outGray) = objectPosition(m_binaryFrame, m_visuFrame, param_minArea, param_maxArea);
 
     // Assigns an id and a counter at each object detected
     for (int i = 0; i < static_cast<int>(m_out[0].size()); i++) {
@@ -981,6 +1028,7 @@ void Tracking::startProcess() {
       m_savefile << m_id[l] << '\n';
     }
     m_outPrev = m_out;
+    m_outGrayPrev = m_outGray;
     m_im++;
     connect(this, &Tracking::finishedProcessFrame, this, &Tracking::imageProcessing);
 

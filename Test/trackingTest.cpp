@@ -388,7 +388,10 @@ TEST_F(TrackingTest, Cleaning) {
   lost = {0, 0, 0};
   lostComp = {0, 0, 0};
   occlusion = {};
-  tracking.cleaning(occlusion, lost, id, input, 10);
+  for (size_t i = 0; i < input.size(); i++) {
+    tracking.cleaning(occlusion, lost, input[i], 10);
+  }
+  tracking.cleaning(occlusion, lost, id, 10);
   EXPECT_EQ(input, comp);
   EXPECT_EQ(id, idComp);
   EXPECT_EQ(lost, lostComp);
@@ -410,7 +413,10 @@ TEST_F(TrackingTest, Cleaning) {
   lost = {0, 0, 0};
   lostComp = {0, 1, 0};
   occlusion = {1};
-  tracking.cleaning(occlusion, lost, id, input, 10);
+  for (size_t i = 0; i < input.size(); i++) {
+    tracking.cleaning(occlusion, lost, input[i], 10);
+  }
+  tracking.cleaning(occlusion, lost, id, 10);
   EXPECT_EQ(input, comp);
   EXPECT_EQ(id, idComp);
   EXPECT_EQ(lost, lostComp);
@@ -432,7 +438,10 @@ TEST_F(TrackingTest, Cleaning) {
   lost = {0, 0, 0};
   lostComp = {1, 1, 0};
   occlusion = {0, 1};
-  tracking.cleaning(occlusion, lost, id, input, 10);
+  for (size_t i = 0; i < input.size(); i++) {
+    tracking.cleaning(occlusion, lost, input[i], 10);
+  }
+  tracking.cleaning(occlusion, lost, id, 10);
   EXPECT_EQ(input, comp);
   EXPECT_EQ(id, idComp);
   EXPECT_EQ(lost, lostComp);
@@ -444,7 +453,10 @@ TEST_F(TrackingTest, Cleaning) {
   lost = {10, 0, 0};
   lostComp = {0, 0};
   occlusion = {0};
-  tracking.cleaning(occlusion, lost, id, input, 10);
+  for (size_t i = 0; i < input.size(); i++) {
+    tracking.cleaning(occlusion, lost, input[i], 10);
+  }
+  tracking.cleaning(occlusion, lost, id, 10);
   EXPECT_EQ(input, comp);
   EXPECT_EQ(id, idComp);
   EXPECT_EQ(lost, lostComp);
@@ -456,7 +468,10 @@ TEST_F(TrackingTest, Cleaning) {
   lost = {10, 10};
   lostComp = {};
   occlusion = {0, 1};
-  tracking.cleaning(occlusion, lost, id, input, 10);
+  for (size_t i = 0; i < input.size(); i++) {
+    tracking.cleaning(occlusion, lost, input[i], 10);
+  }
+  tracking.cleaning(occlusion, lost, id, 10);
   EXPECT_EQ(input, comp);
   EXPECT_EQ(id, idComp);
   EXPECT_EQ(lost, lostComp);

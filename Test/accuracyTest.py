@@ -169,8 +169,9 @@ def test_accuracy():
   trackingData = pandas.read_csv("dataSet/images/Tracking_Result/tracking.txt", engine="python", sep="\t", usecols=['xBody', 'yBody', 'imageNumber', 'id'])              
   res = errorsCounter(reference, trackingData)
   shutil.rmtree("dataSet/images/Tracking_Result/")
-  assert res[1] == 12, "If better accuracy than previously reported! Please update the benchmark comment and the test with: " + str(np.around(res[0]*100, 2)) + '%\t' + str(res[1]) + " errors"
+  assert res[1] == 11, "If better accuracy than previously reported! Please update the benchmark comment and the test with: " + str(np.around(res[0]*100, 2)) + '%\t' + str(res[1]) + " errors"
   """
   v5.0.0 accuracy: 0.49%	12 errors  
+  vdev accuracy: 0.45%	11 errors by adding correlation between objets histogram intensity without normalisation  
   """
 

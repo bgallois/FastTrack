@@ -120,13 +120,16 @@ class Tracking : public QObject {
   static double angleDifference(double alpha, double beta);
   bool objectDirection(const UMat &image, vector<double> &information);
   vector<double> objectInformation(const UMat &image);
-  vector<Point3d> reassignment(const vector<Point3d> &past, const vector<Point3d> &input, const vector<int> &assignment);
+  template <typename T, typename A>
+  vector<T, A> reassignment(const vector<T, A> &past, const vector<T, A> &input, const vector<int> &assignment);
   UMat backgroundExtraction(VideoReader &video, int n, const int method, const int registrationMethod);
   void registration(UMat imageReference, UMat &frame, int method);
   void binarisation(UMat &frame, char backgroundColor, int value);
-  vector<vector<Point3d>> objectPosition(const UMat &frame, int minSize, int maxSize);
-  vector<int> costFunc(const vector<vector<Point3d>> &prevPos, const vector<vector<Point3d>> &pos, double LENGHT, double ANGLE, double LO, double AREA, double PERIMETER);
-  void cleaning(const vector<int> &occluded, vector<int> &lostCounter, vector<int> &id, vector<vector<Point3d>> &input, double param_maximalTime);
+  pair<vector<vector<Point3d>>, vector<Mat>> objectPosition(const UMat &frame, const UMat &grayFrame, int minSize, int maxSize);
+  vector<int> costFunc(const vector<vector<Point3d>> &prevPos, const vector<vector<Point3d>> &pos, double LENGHT, double ANGLE, double LO, double AREA, double PERIMETER, const vector<Mat> &prevGray = {}, const vector<Mat> &gray = {});
+  template <typename T, typename A>
+  void cleaning(const vector<int> &occluded, const vector<int> &lostCounter, vector<T, A> &input, const double param_maximalTime);
+  void cleaning(const vector<int> &occluded, vector<int> &lostCounter, vector<int> &id, const double param_maximalTime);
   vector<Point3d> prevision(vector<Point3d> past, vector<Point3d> present);
   vector<Point3i> color(int number);
   vector<int> findOcclusion(vector<int> assignment);
@@ -135,6 +138,8 @@ class Tracking : public QObject {
   UMat m_visuFrame;                  /*!< Image 8 bit CV_8U */
   vector<vector<Point3d>> m_out;     /*!< Objects information at iteration minus one */
   vector<vector<Point3d>> m_outPrev; /*!< Objects information at current iteration */
+  vector<Mat> m_outGray;             /*!< Objects information at iteration minus one */
+  vector<Mat> m_outGrayPrev;         /*!< Objects information at current iteration */
 
  public slots:
   void startProcess();
